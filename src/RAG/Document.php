@@ -17,6 +17,8 @@ class Document implements \JsonSerializable
 
     public int $chunkNumber = 0;
 
+    public array $metadata = [];
+
     public function __construct(
         public string $content = '',
     ) {}

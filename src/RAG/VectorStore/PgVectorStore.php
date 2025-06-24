@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\RAG\VectorStore;
 
 use NeuronAI\RAG\Document;
@@ -8,7 +10,6 @@ use Pgvector\Vector;
 
 class PgVectorStore implements VectorStoreInterface
 {
-
     public function __construct(
         protected Connection $connection,
         protected string $table,
@@ -66,7 +67,7 @@ class PgVectorStore implements VectorStoreInterface
 
         $this->checkVectorDimension(count($document->embedding));
 
-        try{
+        try {
 
             pg_query($this->connection, 'BEGIN');
 

@@ -18,8 +18,6 @@ class Document implements \JsonSerializable
 
     public array $metadata = [];
 
-    public array $metadata = [];
-
     public function __construct(
         public string $content = '',
     ) {

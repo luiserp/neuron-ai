@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\RAG\DataLoader;
 
 use NeuronAI\RAG\Document;
@@ -7,7 +9,7 @@ use NeuronAI\RAG\Document;
 interface DataLoaderInterface
 {
     /**
-     * @return array<Document>
+     * @return Document[]
      */
     public function getDocuments(): array;
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\Observability\Events;
 
 use NeuronAI\Chat\Messages\Message;
@@ -8,10 +10,11 @@ use NeuronAI\RAG\Document;
 class VectorStoreResult
 {
     /**
-     * @param array<Document> $documents
+     * @param Document[] $documents
      */
     public function __construct(
         public Message $question,
         public array $documents,
-    ) {}
+    ) {
+    }
 }

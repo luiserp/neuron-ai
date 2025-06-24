@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\RAG\DataLoader;
 
 use NeuronAI\RAG\Document;
-use NeuronAI\RAG\Splitters\DocumentSplitter;
 
 class FileDataLoader extends AbstractDataLoader
 {
@@ -14,6 +15,7 @@ class FileDataLoader extends AbstractDataLoader
 
     public function __construct(protected string $path, array $readers = [])
     {
+        parent::__construct();
         $this->setReaders($readers);
     }
 
@@ -47,7 +49,7 @@ class FileDataLoader extends AbstractDataLoader
         // If it's a file
         try {
             return [$this->getDocument($this->getContentFromFile($this->path), $this->path)];
-        } catch (\Throwable $exception) {
+        } catch (\Throwable) {
             return [];
         }
     }
@@ -66,7 +68,8 @@ class FileDataLoader extends AbstractDataLoader
                     } else {
                         try {
                             $documents[] = $this->getDocument($this->getContentFromFile($fullPath), $entry);
-                        } catch (\Throwable $exception) {}
+                        } catch (\Throwable) {
+                        }
                     }
                 }
             }
@@ -75,7 +78,7 @@ class FileDataLoader extends AbstractDataLoader
             closedir($handle);
         }
 
-        return DocumentSplitter::splitDocuments($documents);
+        return $this->splitter->splitDocuments($documents);
     }
 
     /**
@@ -98,12 +101,11 @@ class FileDataLoader extends AbstractDataLoader
     }
 
 
-    protected function getDocument(string $content, string $entry): mixed
+    protected function getDocument(string $content, string $entry): Document
     {
         $document = new Document($content);
         $document->sourceType = 'files';
         $document->sourceName = $entry;
-        $document->hash = \hash('sha256', $content);
 
         return $document;
     }

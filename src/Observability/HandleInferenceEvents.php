@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\Observability;
 
-use NeuronAI\Chat\Messages\ToolCallMessage;
-use NeuronAI\Chat\Messages\ToolCallResultMessage;
+use NeuronAI\Agent;
 use NeuronAI\Observability\Events\InferenceStart;
 use NeuronAI\Observability\Events\InferenceStop;
 use NeuronAI\Observability\Events\MessageSaved;
@@ -11,20 +12,20 @@ use NeuronAI\Observability\Events\MessageSaving;
 
 trait HandleInferenceEvents
 {
-    public function messageSaving(\NeuronAI\AgentInterface $agent, string $event, MessageSaving $data)
+    public function messageSaving(Agent $agent, string $event, MessageSaving $data): void
     {
         if (!$this->inspector->canAddSegments()) {
             return;
         }
 
-        $label = $this->getBaseClassName(get_class($data->message));
+        $label = $this->getBaseClassName($data->message::class);
 
         $this->segments[$this->getMessageId($data->message).'-save'] = $this->inspector
             ->startSegment(self::SEGMENT_TYPE.'-chathistory', "save( {$label} )")
             ->setColor(self::SEGMENT_COLOR);
     }
 
-    public function messageSaved(\NeuronAI\AgentInterface $agent, string $event, MessageSaved $data)
+    public function messageSaved(Agent $agent, string $event, MessageSaved $data): void
     {
         $id = $this->getMessageId($data->message).'-save';
 
@@ -32,39 +33,40 @@ trait HandleInferenceEvents
             return;
         }
 
-        $this->segments[$id]
-            ->addContext('Message', \array_merge($data->message->jsonSerialize(), $data->message->getUsage() ? [
+        $segment = $this->segments[$id];
+        $segment->addContext('Message', \array_merge($data->message->jsonSerialize(), $data->message->getUsage() ? [
                 'usage' => [
                     'input_tokens' => $data->message->getUsage()->inputTokens,
                     'output_tokens' => $data->message->getUsage()->outputTokens,
                 ]
-            ] : []))
-            ->end();
+            ] : []));
+        $segment->end();
     }
 
-    public function inferenceStart(\NeuronAI\AgentInterface $agent, string $event, InferenceStart $data)
+    public function inferenceStart(Agent $agent, string $event, InferenceStart $data): void
     {
         if (!$this->inspector->canAddSegments()) {
             return;
         }
 
-        $label = $this->getBaseClassName(get_class($data->message));
+        $label = $this->getBaseClassName($data->message::class);
 
         $this->segments[$this->getMessageId($data->message).'-inference'] = $this->inspector
             ->startSegment(self::SEGMENT_TYPE.'-inference', "inference( {$label} )")
             ->setColor(self::SEGMENT_COLOR);
     }
 
-    public function inferenceStop(\NeuronAI\AgentInterface $agent, string $event, InferenceStop $data)
+    public function inferenceStop(Agent $agent, string $event, InferenceStop $data): void
     {
         $id = $this->getMessageId($data->message).'-inference';
 
         if (\array_key_exists($id, $this->segments)) {
-            $this->segments[$id]
-                ->setContext($this->getContext($agent))
-                ->addContext('Message', $data->message)
-                ->addContext('Response', $data->response)
-                ->end();
+            $segment = $this->segments[$id]->end();
+            $segment->addContext('Message', $data->message)
+                ->addContext('Response', $data->response);
+            foreach ($this->getContext($agent) as $key => $value) {
+                $segment->addContext($key, $value);
+            }
         }
     }
 }

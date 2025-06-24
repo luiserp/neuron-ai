@@ -1,30 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\Providers\Anthropic;
 
-use NeuronAI\Chat\Messages\Message;
-use NeuronAI\Providers\AIProviderInterface;
-use NeuronAI\Providers\HandleClient;
-use NeuronAI\Providers\HandleWithTools;
-use NeuronAI\Chat\Messages\ToolCallMessage;
-use NeuronAI\Tools\ToolInterface;
-use NeuronAI\Tools\ToolProperty;
 use GuzzleHttp\Client;
+use NeuronAI\Chat\Messages\Message;
+use NeuronAI\Chat\Messages\ToolCallMessage;
+use NeuronAI\Providers\HasGuzzleClient;
+use NeuronAI\Providers\AIProviderInterface;
+use NeuronAI\Providers\HandleWithTools;
+use NeuronAI\Providers\MessageMapperInterface;
+use NeuronAI\Tools\ToolInterface;
+use NeuronAI\Tools\ToolPropertyInterface;
 
 class Anthropic implements AIProviderInterface
 {
-    use HandleClient;
+    use HasGuzzleClient;
     use HandleWithTools;
     use HandleChat;
     use HandleStream;
     use HandleStructured;
-
-    /**
-     * The http client.
-     *
-     * @var Client
-     */
-    protected Client $client;
 
     /**
      * The main URL of the provider API.
@@ -39,7 +35,14 @@ class Anthropic implements AIProviderInterface
      *
      * @var string|null
      */
-    protected ?string $system;
+    protected ?string $system = null;
+
+    /**
+     * The component responsible for mapping the NeuronAI Message to the AI provider format.
+     *
+     * @var MessageMapperInterface
+     */
+    protected MessageMapperInterface $messageMapper;
 
     /**
      * AnthropicClaude constructor.
@@ -70,19 +73,19 @@ class Anthropic implements AIProviderInterface
         return $this;
     }
 
-    public function generateToolsPayload(): array
+    public function messageMapper(): MessageMapperInterface
+    {
+        if (!isset($this->messageMapper)) {
+            $this->messageMapper = new MessageMapper();
+        }
+        return $this->messageMapper;
+    }
+
+    protected function generateToolsPayload(): array
     {
         return \array_map(function (ToolInterface $tool) {
-            $properties = \array_reduce($tool->getProperties(), function ($carry, ToolProperty $property) {
-                $carry[$property->getName()] = [
-                    'type' => $property->getType(),
-                    'description' => $property->getDescription(),
-                ];
-
-                if (!empty($property->getEnum())) {
-                    $carry[$property->getName()]['enum'] = $property->getEnum();
-                }
-
+            $properties = \array_reduce($tool->getProperties(), function ($carry, ToolPropertyInterface $property) {
+                $carry[$property->getName()] = $property->getJsonSchema();
                 return $carry;
             }, []);
 
@@ -98,7 +101,7 @@ class Anthropic implements AIProviderInterface
         }, $this->tools);
     }
 
-    public function createToolMessage(array $content): Message
+    public function createToolCallMessage(array $content): Message
     {
         $tool = $this->findTool($content['name'])
             ->setInputs($content['input'])
@@ -106,7 +109,9 @@ class Anthropic implements AIProviderInterface
 
         // During serialization and deserialization PHP convert the original empty object {} to empty array []
         // causing an error on the Anthropic API. If there are no inputs, we need to restore the empty JSON object.
-        $content['input'] ??= (object)[];
+        if (empty($content['input'])) {
+            $content['input'] = new \stdClass();
+        }
 
         return new ToolCallMessage(
             [$content],

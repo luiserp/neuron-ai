@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\Providers\Ollama;
 
+use NeuronAI\Chat\Enums\MessageRole;
 use NeuronAI\Chat\Messages\Message;
 use Psr\Http\Message\StreamInterface;
 
@@ -11,15 +14,13 @@ trait HandleStream
     {
         // Include the system prompt
         if (isset($this->system)) {
-            \array_unshift($messages, new Message(Message::ROLE_SYSTEM, $this->system));
+            \array_unshift($messages, new Message(MessageRole::SYSTEM, $this->system));
         }
-
-        $mapper = new MessageMapper($messages);
 
         $json = [
             'stream' => true,
             'model' => $this->model,
-            'messages' => $mapper->map(),
+            'messages' => $this->messageMapper()->map($messages),
             ...$this->parameters,
         ];
 
@@ -47,11 +48,14 @@ trait HandleStream
             }
 
             // Process tool calls
-            // Ollama doesn't support tool calls for stream response
-            // https://github.com/ollama/ollama/blob/main/docs/api.md
+            if (isset($line['message']['tool_calls'])) {
+                yield from $executeToolsCallback(
+                    $this->createToolCallMessage($line['message'])
+                );
+            }
 
             // Process regular content
-            $content = $line['message']['content']??'';
+            $content = $line['message']['content'] ?? '';
 
             yield $content;
         }

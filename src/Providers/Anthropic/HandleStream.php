@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\Providers\Anthropic;
 
 use GuzzleHttp\Exception\GuzzleException;
@@ -16,14 +18,12 @@ trait HandleStream
      */
     public function stream(array|string $messages, callable $executeToolsCallback): \Generator
     {
-        $mapper = new MessageMapper($messages);
-
         $json = [
             'stream' => true,
             'model' => $this->model,
             'max_tokens' => $this->max_tokens,
             'system' => $this->system ?? null,
-            'messages' => $mapper->map(),
+            'messages' => $this->messageMapper()->map($messages),
             ...$this->parameters,
         ];
 
@@ -73,12 +73,12 @@ trait HandleStream
                 }, $toolCalls);
 
                 yield from $executeToolsCallback(
-                    $this->createToolMessage(\end($toolCalls))
+                    $this->createToolCallMessage(\end($toolCalls))
                 );
             }
 
             // Process regular content
-            $content = $line['delta']['text']??'';
+            $content = $line['delta']['text'] ?? '';
 
             yield $content;
         }
@@ -101,7 +101,7 @@ trait HandleStream
                 'input' => '',
             ];
         } else {
-            if ($input = $line['delta']['partial_json']??null) {
+            if ($input = $line['delta']['partial_json'] ?? null) {
                 $toolCalls[$line['index']]['input'] .= $input;
             }
         }

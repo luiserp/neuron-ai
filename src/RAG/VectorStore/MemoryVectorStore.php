@@ -1,14 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\RAG\VectorStore;
 
-use NeuronAI\Exceptions\SimilarityCalculationException;
+use NeuronAI\Exceptions\VectorStoreException;
 use NeuronAI\RAG\Document;
+use NeuronAI\RAG\VectorStore\Search\SimilaritySearch;
 
 class MemoryVectorStore implements VectorStoreInterface
 {
-    /** @var array<Document> */
+    /**
+     * @var Document[]
+     */
     private array $documents = [];
+
+    public function __construct(protected int $topK = 4)
+    {
+    }
 
     public function addDocument(Document $document): void
     {
@@ -20,27 +29,26 @@ class MemoryVectorStore implements VectorStoreInterface
         $this->documents = \array_merge($this->documents, $documents);
     }
 
-    /**
-     * @throws SimilarityCalculationException
-     */
-    public function similaritySearch(array $embedding, int $k = 4): array
+    public function similaritySearch(array $embedding): array
     {
         $distances = [];
 
         foreach ($this->documents as $index => $document) {
-            if ($document->embedding === null) {
-                throw new \Exception("Document with the following content has no embedding: {$document->content}");
+            if (empty($document->embedding)) {
+                throw new VectorStoreException("Document with the following content has no embedding: {$document->getContent()}");
             }
-            $dist = $this->cosineSimilarity($embedding, $document->embedding);
+            $dist = $this->cosineSimilarity($embedding, $document->getEmbedding());
             $distances[$index] = $dist;
         }
 
         \asort($distances); // Sort by distance (ascending).
 
-        $topKIndices = \array_slice(\array_keys($distances), 0, $k, true);
+        $topKIndices = \array_slice(\array_keys($distances), 0, $this->topK, true);
 
-        return \array_reduce($topKIndices, function ($carry, $index) {
-            $carry[] = $this->documents[$index];
+        return \array_reduce($topKIndices, function ($carry, $index) use ($distances) {
+            $document = $this->documents[$index];
+            $document->setScore(1 - $distances[$index]);
+            $carry[] = $document;
             return $carry;
         }, []);
     }
@@ -48,24 +56,6 @@ class MemoryVectorStore implements VectorStoreInterface
 
     public function cosineSimilarity(array $vector1, array $vector2): float
     {
-        if (\count($vector1) !== \count($vector2)) {
-            throw new SimilarityCalculationException('Arrays must have the same length to apply cosine similarity.');
-        }
-
-        // Calculate the dot product of the two vectors
-        $dotProduct = \array_sum(\array_map(fn (float $a, float $b): float => $a * $b, $vector1, $vector2));
-
-        // Calculate the magnitudes of each vector
-        $magnitude1 = \sqrt(\array_sum(\array_map(fn (float $a): float => $a * $a, $vector1)));
-
-        $magnitude2 = \sqrt(\array_sum(\array_map(fn (float $a): float => $a * $a, $vector2)));
-
-        // Avoid division by zero
-        if ($magnitude1 * $magnitude2 == 0) {
-            return 0;
-        }
-
-        // Calculate the cosine distance
-        return 1 - $dotProduct / ($magnitude1 * $magnitude2);
+        return SimilaritySearch::cosine($vector1, $vector2);
     }
 }

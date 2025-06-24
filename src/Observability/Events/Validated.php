@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\Observability\Events;
 
 class Validated
@@ -13,5 +15,6 @@ class Validated
         public string $class,
         public string $json,
         public array $violations = []
-    ) {}
+    ) {
+    }
 }

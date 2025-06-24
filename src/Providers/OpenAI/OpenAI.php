@@ -1,35 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\Providers\OpenAI;
 
-use GuzzleHttp\Exception\GuzzleException;
-use NeuronAI\Chat\Messages\AssistantMessage;
-use NeuronAI\Chat\Messages\Message;
 use GuzzleHttp\Client;
-use NeuronAI\Chat\Messages\Usage;
-use NeuronAI\Exceptions\ProviderException;
-use NeuronAI\Providers\AIProviderInterface;
-use NeuronAI\Providers\HandleClient;
-use NeuronAI\Providers\HandleWithTools;
+use NeuronAI\Chat\Messages\Message;
 use NeuronAI\Chat\Messages\ToolCallMessage;
+use NeuronAI\Providers\HasGuzzleClient;
+use NeuronAI\Providers\AIProviderInterface;
+use NeuronAI\Providers\HandleWithTools;
+use NeuronAI\Providers\MessageMapperInterface;
 use NeuronAI\Tools\ToolInterface;
-use NeuronAI\Tools\ToolProperty;
-use Psr\Http\Message\StreamInterface;
+use NeuronAI\Tools\ToolPropertyInterface;
 
 class OpenAI implements AIProviderInterface
 {
-    use HandleClient;
+    use HasGuzzleClient;
     use HandleWithTools;
     use HandleChat;
     use HandleStream;
     use HandleStructured;
-
-    /**
-     * The http client.
-     *
-     * @var Client
-     */
-    protected Client $client;
 
     /**
      * The main URL of the provider API.
@@ -44,7 +35,14 @@ class OpenAI implements AIProviderInterface
      *
      * @var ?string
      */
-    protected ?string $system;
+    protected ?string $system = null;
+
+    /**
+     * The component responsible for mapping the NeuronAI Message to the AI provider format.
+     *
+     * @var MessageMapperInterface
+     */
+    protected MessageMapperInterface $messageMapper;
 
     public function __construct(
         protected string $key,
@@ -67,7 +65,15 @@ class OpenAI implements AIProviderInterface
         return $this;
     }
 
-    public function generateToolsPayload(): array
+    public function messageMapper(): MessageMapperInterface
+    {
+        if (!isset($this->messageMapper)) {
+            $this->messageMapper = new MessageMapper();
+        }
+        return $this->messageMapper;
+    }
+
+    protected function generateToolsPayload(): array
     {
         return \array_map(function (ToolInterface $tool) {
             $payload = [
@@ -75,19 +81,16 @@ class OpenAI implements AIProviderInterface
                 'function' => [
                     'name' => $tool->getName(),
                     'description' => $tool->getDescription(),
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => new \stdClass(),
+                        'required' => [],
+                    ],
                 ]
             ];
 
-            $properties = \array_reduce($tool->getProperties(), function (array $carry, ToolProperty $property) {
-                $carry[$property->getName()] = [
-                    'description' => $property->getDescription(),
-                    'type' => $property->getType(),
-                ];
-
-                if (!empty($property->getEnum())) {
-                    $carry[$property->getName()]['enum'] = $property->getEnum();
-                }
-
+            $properties = \array_reduce($tool->getProperties(), function (array $carry, ToolPropertyInterface $property) {
+                $carry[$property->getName()] = $property->getJsonSchema();
                 return $carry;
             }, []);
 
@@ -103,13 +106,16 @@ class OpenAI implements AIProviderInterface
         }, $this->tools);
     }
 
-    protected function createToolMessage(array $message): Message
+    protected function createToolCallMessage(array $message): Message
     {
-        $tools = \array_map(function (array $item) {
-            return $this->findTool($item['function']['name'])
-                ->setInputs(json_decode($item['function']['arguments'], true))
-                ->setCallId($item['id']);
-        }, $message['tool_calls']);
+        $tools = \array_map(
+            fn (array $item) => $this->findTool($item['function']['name'])
+                ->setInputs(
+                    \json_decode($item['function']['arguments'], true)
+                )
+                ->setCallId($item['id']),
+            $message['tool_calls']
+        );
 
         $result = new ToolCallMessage(
             $message['content'],

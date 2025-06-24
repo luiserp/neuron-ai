@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\RAG\VectorStore;
 
 use Elastic\Elasticsearch\Exception\ClientResponseException;
@@ -12,42 +14,51 @@ class ElasticsearchVectorStore implements VectorStoreInterface
 {
     protected bool $vectorDimSet = false;
 
-    /**
-     * @throws \Exception
-     */
+    protected array $filters = [];
+
     public function __construct(
         protected Client $client,
-        protected string $index
+        protected string $index,
+        protected int $topK = 4,
     ) {
+    }
+
+    protected function checkIndexStatus(Document $document): void
+    {
         /** @var Elasticsearch $existResponse */
-        $existResponse = $client->indices()->exists(['index' => $index]);
+        $existResponse = $this->client->indices()->exists(['index' => $this->index]);
         $existStatusCode = $existResponse->getStatusCode();
 
         if ($existStatusCode === 200) {
+            // Map vector embeddings dimension on the fly adding a document.
+            $this->mapVectorDimension(\count($document->getEmbedding()));
             return;
         }
 
-        $client->indices()->create([
-            'index' => $index,
+        $properties = [
+            'content' => [
+                'type' => 'text',
+            ],
+            'sourceType' => [
+                'type' => 'keyword',
+            ],
+            'sourceName' => [
+                'type' => 'keyword',
+            ]
+        ];
+
+        // Map metadata
+        foreach ($document->metadata as $name => $value) {
+            $properties[$name] = [
+                'type' => 'keyword',
+            ];
+        }
+
+        $this->client->indices()->create([
+            'index' => $this->index,
             'body' => [
                 'mappings' => [
-                    'properties' => [
-                        'content' => [
-                            'type' => 'text',
-                        ],
-                        'sourceType' => [
-                            'type' => 'keyword',
-                        ],
-                        'sourceName' => [
-                            'type' => 'keyword',
-                        ],
-                        'hash' => [
-                            'type' => 'keyword',
-                        ],
-                        'chunkNumber' => [
-                            'type' => 'integer',
-                        ],
-                    ],
+                    'properties' => $properties,
                 ],
             ],
         ]);
@@ -58,21 +69,20 @@ class ElasticsearchVectorStore implements VectorStoreInterface
      */
     public function addDocument(Document $document): void
     {
-        if ($document->embedding === null) {
-            throw new \Exception('document embedding must be set before adding a document');
+        if (empty($document->embedding)) {
+            throw new \Exception('Document embedding must be set before adding a document');
         }
 
-        $this->mapVectorDimension(\count($document->embedding));
+        $this->checkIndexStatus($document);
 
         $this->client->index([
             'index' => $this->index,
             'body' => [
-                'embedding' => $document->embedding,
-                'content' => $document->content,
-                'sourceType' => $document->sourceType,
-                'sourceName' => $document->sourceName,
-                'hash' => $document->hash,
-                'chunkNumber' => $document->chunkNumber,
+                'embedding' => $document->getEmbedding(),
+                'content' => $document->getContent(),
+                'sourceType' => $document->getSourceType(),
+                'sourceName' => $document->getSourceName(),
+                ...$document->metadata,
             ],
         ]);
 
@@ -84,20 +94,17 @@ class ElasticsearchVectorStore implements VectorStoreInterface
      *
      * @throws \Exception
      */
-    public function addDocuments(array $documents, int $numberOfDocumentsPerRequest = 0): void
+    public function addDocuments(array $documents): void
     {
         if ($documents === []) {
             return;
         }
 
-        if ($documents[0]->embedding === null) {
-            throw new \Exception('document embedding must be set before adding a document');
+        if (empty($documents[0]->getEmbedding())) {
+            throw new \Exception('Document embedding must be set before adding a document');
         }
 
-        /*
-         * Map vector embeddings dimension on the fly adding a document.
-         */
-        $this->mapVectorDimension(count($documents[0]->embedding));
+        $this->checkIndexStatus($documents[0]);
 
         /*
          * Generate a bulk payload
@@ -110,14 +117,12 @@ class ElasticsearchVectorStore implements VectorStoreInterface
                 ],
             ];
             $params['body'][] = [
-                'embedding' => $document->embedding,
-                'content' => $document->content,
-                'sourceType' => $document->sourceType,
-                'sourceName' => $document->sourceName,
-                'hash' => $document->hash,
-                'chunkNumber' => $document->chunkNumber,
+                'embedding' => $document->getEmbedding(),
+                'content' => $document->getContent(),
+                'sourceType' => $document->getSourceType(),
+                'sourceName' => $document->getSourceName(),
+                ...$document->metadata,
             ];
-
         }
         $this->client->bulk($params);
         $this->client->indices()->refresh(['index' => $this->index]);
@@ -127,26 +132,20 @@ class ElasticsearchVectorStore implements VectorStoreInterface
      * {@inheritDoc}
      *
      * num_candidates are used to tune approximate kNN for speed or accuracy (see : https://www.elastic.co/guide/en/elasticsearch/reference/current/knn-search.html#tune-approximate-knn-for-speed-accuracy)
-     * @return array
+     * @return Document[]
      * @throws ClientResponseException
      * @throws ServerResponseException
      */
-    public function similaritySearch(array $embedding, int $k = 4, array $additionalArguments = []): array
+    public function similaritySearch(array $embedding): array
     {
-        if (\array_key_exists('num_candidates', $additionalArguments)) {
-            $numCandidates = $additionalArguments['num_candidates'];
-        } else {
-            $numCandidates = \max(50, $k * 4);
-        }
-
         $searchParams = [
             'index' => $this->index,
             'body' => [
                 'knn' => [
                     'field' => 'embedding',
                     'query_vector' => $embedding,
-                    'k' => $k,
-                    'num_candidates' => $numCandidates,
+                    'k' => $this->topK,
+                    'num_candidates' => \max(50, $this->topK * 4),
                 ],
                 'sort' => [
                     '_score' => [
@@ -156,23 +155,33 @@ class ElasticsearchVectorStore implements VectorStoreInterface
             ],
         ];
 
-        if (\array_key_exists('filter', $additionalArguments)) {
-            $searchParams['body']['knn']['filter'] = $additionalArguments['filter'];
+        // Hybrid search
+        if (!empty($this->filters)) {
+            $searchParams['body']['knn']['filter'] = $this->filters;
         }
 
         $response = $this->client->search($searchParams);
 
         return \array_map(function (array $item) {
             $document = new Document($item['_source']['content']);
-            $document->embedding = $item['_source']['embedding'];
+            //$document->embedding = $item['_source']['embedding']; // avoid carrying large data
             $document->sourceType = $item['_source']['sourceType'];
             $document->sourceName = $item['_source']['sourceName'];
-            $document->hash = $item['_source']['hash'];
-            $document->chunkNumber = $item['_source']['chunkNumber'];
+            $document->score = $item['_score'];
+
+            foreach ($item['_source'] as $name => $value) {
+                if (!\in_array($name, ['content', 'sourceType', 'sourceName', 'score', 'embedding', 'id'])) {
+                    $document->addMetadata($name, $value);
+                }
+            }
+
             return $document;
         }, $response['hits']['hits']);
     }
 
+    /**
+     * Map vector embeddings dimension on the fly.
+     */
     private function mapVectorDimension(int $dimension): void
     {
         if ($this->vectorDimSet) {
@@ -208,5 +217,11 @@ class ElasticsearchVectorStore implements VectorStoreInterface
         ]);
 
         $this->vectorDimSet = true;
+    }
+
+    public function withFilters(array $filters): self
+    {
+        $this->filters = $filters;
+        return $this;
     }
 }

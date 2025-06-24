@@ -1,19 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\Providers\OpenAI;
 
-use GuzzleHttp\Exception\GuzzleException;
 use NeuronAI\Chat\Messages\Message;
 
 trait HandleStructured
 {
-    /**
-     * @param array<Message> $messages
-     * @param string $class
-     * @param array $response_format
-     * @return Message
-     * @throws GuzzleException
-     */
     public function structured(
         array $messages,
         string $class,
@@ -26,7 +20,7 @@ trait HandleStructured
                 'type' => 'json_schema',
                 'json_schema' => [
                     "name" => end($tk),
-                    "strict" => true,
+                    "strict" => false,
                     "schema" => $response_format,
                 ],
             ]

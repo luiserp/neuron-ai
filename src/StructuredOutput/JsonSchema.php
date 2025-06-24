@@ -1,10 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\StructuredOutput;
 
 use ReflectionClass;
 use ReflectionEnum;
+use ReflectionEnumBackedCase;
 use ReflectionException;
+use ReflectionNamedType;
 use ReflectionProperty;
 
 class JsonSchema
@@ -33,11 +37,14 @@ class JsonSchema
         $this->processedClasses = [];
 
         // Generate the main schema
-        $schema = $this->generateClassSchema($class);
+        $schema = [
+            ...$this->generateClassSchema($class),
+            'additionalProperties' => false,
+        ];
 
         // Add definitions if any exist
         if (!empty($this->definitions)) {
-            $schema['definitions'] = $this->definitions;
+            $schema['definitions'] = \array_map(fn (array $definition) => [...$definition, 'additionalProperties' => false], $this->definitions);
         }
 
         return $schema;
@@ -67,10 +74,10 @@ class JsonSchema
 
         // Handle enum types differently
         if ($reflection->isEnum()) {
-            return $this->processEnum($reflection, $isRoot);
+            return $this->processEnum(new ReflectionEnum($class), $isRoot);
         }
 
-        // Create basic object schema
+        // Create a basic object schema
         $schema = [
             'type' => 'object',
             'properties' => [],
@@ -144,6 +151,7 @@ class JsonSchema
             }
         }
 
+        /** @var ?ReflectionNamedType $type */
         $type = $property->getType();
         $typeName = $type?->getName();
 
@@ -160,7 +168,7 @@ class JsonSchema
             $docComment = $property->getDocComment();
             if ($docComment) {
                 // Extract type from @var array<Type>
-                preg_match('/@var\s+array<([^>]*)>/', $docComment, $matches);
+                preg_match('/@var\s+([a-zA-Z_\\\\]+)\[\]/', $docComment, $matches);
 
                 if (isset($matches[1])) {
                     $itemType = trim($matches[1]);
@@ -247,6 +255,7 @@ class JsonSchema
         // Extract enum values
         foreach ($enum->getCases() as $case) {
             if ($enum->isBacked()) {
+                /** @var ReflectionEnumBackedCase $case */
                 // For backed enums, use the backing value
                 $schema['enum'][] = $case->getBackingValue();
             } else {

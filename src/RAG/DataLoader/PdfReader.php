@@ -1,8 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\RAG\DataLoader;
 
-use Closure;
 use NeuronAI\Exceptions\DataReaderException;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
@@ -26,11 +27,14 @@ class PdfReader implements ReaderInterface
 
     public function __construct(?string $binPath = null)
     {
-        $this->binPath = $binPath ?? $this->findPdfToText();
+        $this->binPath = \is_string($binPath) ? $this->setBinPath($binPath) : $this->findPdfToText();
     }
 
     public function setBinPath(string $binPath): self
     {
+        if (!is_executable($binPath)) {
+            throw new DataReaderException("The provided path is not executable.");
+        }
         $this->binPath = $binPath;
         return $this;
     }
@@ -93,7 +97,7 @@ class PdfReader implements ReaderInterface
             return explode(' ', $content, 2);
         };
 
-        $reducer = fn(array $carry, array $option): array => array_merge($carry, $option);
+        $reducer = fn (array $carry, array $option): array => array_merge($carry, $option);
 
         return array_reduce(array_map($mapper, $options), $reducer, []);
     }
@@ -123,7 +127,9 @@ class PdfReader implements ReaderInterface
         string $filePath,
         array $options = []
     ): string {
+        /** @phpstan-ignore new.static */
         $instance = new static();
+        $instance->setPdf($filePath);
 
         if (\array_key_exists('binPath', $options)) {
             $instance->setBinPath($options['binPath']);

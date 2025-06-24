@@ -1,16 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\Tools;
 
-class ToolProperty implements \JsonSerializable
+use NeuronAI\StaticConstructor;
+
+/**
+ * @method static static make(string $name, PropertyType $type, string $description, bool $required = false, array $enum = [])
+ */
+class ToolProperty implements ToolPropertyInterface
 {
+    use StaticConstructor;
+
     public function __construct(
         protected string $name,
-        protected string|array $type,
+        protected PropertyType $type,
         protected string $description,
         protected bool $required = false,
         protected array $enum = [],
-    ) {}
+    ) {
+    }
 
     /**
      * @return array
@@ -20,7 +30,7 @@ class ToolProperty implements \JsonSerializable
         return [
             'name' => $this->name,
             'description' => $this->description,
-            'type' => $this->type,
+            'type' => $this->type->value,
             'enum' => $this->enum,
             'required' => $this->required,
         ];
@@ -36,7 +46,7 @@ class ToolProperty implements \JsonSerializable
         return $this->name;
     }
 
-    public function getType(): string|array
+    public function getType(): PropertyType
     {
         return $this->type;
     }
@@ -49,5 +59,19 @@ class ToolProperty implements \JsonSerializable
     public function getEnum(): array
     {
         return $this->enum;
+    }
+
+    public function getJsonSchema(): array
+    {
+        $schema = [
+            'type' => $this->type->value,
+            'description' => $this->description,
+        ];
+
+        if (!empty($this->enum)) {
+            $schema['enum'] = $this->enum;
+        }
+
+        return $schema;
     }
 }

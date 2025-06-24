@@ -1,149 +1,243 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\RAG;
 
 use NeuronAI\Agent;
+use NeuronAI\AgentInterface;
 use NeuronAI\Chat\Messages\Message;
-use NeuronAI\Observability\Events\InstructionsChanged;
-use NeuronAI\Observability\Events\InstructionsChanging;
+use NeuronAI\Exceptions\AgentException;
+use NeuronAI\Observability\Events\PostProcessed;
+use NeuronAI\Observability\Events\PostProcessing;
+use NeuronAI\Observability\Events\PreProcessed;
+use NeuronAI\Observability\Events\PreProcessing;
 use NeuronAI\Observability\Events\VectorStoreResult;
 use NeuronAI\Observability\Events\VectorStoreSearching;
 use NeuronAI\Exceptions\MissingCallbackParameter;
 use NeuronAI\Exceptions\ToolCallableNotSet;
-use NeuronAI\RAG\Embeddings\EmbeddingsProviderInterface;
-use NeuronAI\RAG\VectorStore\VectorStoreInterface;
-use NeuronAI\SystemPrompt;
+use NeuronAI\Providers\AIProviderInterface;
+use NeuronAI\RAG\PostProcessor\PostProcessorInterface;
+use NeuronAI\RAG\PreProcessor\PreProcessorInterface;
 
+/**
+ * @method RAG withProvider(AIProviderInterface $provider)
+ */
 class RAG extends Agent
 {
-    /**
-     * @var VectorStoreInterface
-     */
-    protected VectorStoreInterface $store;
+    use ResolveVectorStore;
+    use ResolveEmbeddingProvider;
 
     /**
-     * The embeddings provider.
-     *
-     * @var EmbeddingsProviderInterface
+     * @var PreProcessorInterface[]
      */
-    protected EmbeddingsProviderInterface $embeddingsProvider;
+    protected array $preProcessors = [];
+
+    /**
+     * @var PostProcessorInterface[]
+     */
+    protected array $postProcessors = [];
+
+    /**
+     * @deprecated TUse "chat" instead
+     */
+    public function answer(Message $question): Message
+    {
+        return $this->chat($question);
+    }
+
+    /**
+     * @deprecated Use "stream" instead
+     */
+    public function answerStream(Message $question): \Generator
+    {
+        return $this->stream($question);
+    }
 
     /**
      * @throws MissingCallbackParameter
      * @throws ToolCallableNotSet
+     * @throws \Throwable
      */
-    public function answer(Message $question, int $k = 4): Message
+    public function chat(Message|array $messages): Message
     {
+        $question = \is_array($messages) ? $messages[0] : $messages;
+
         $this->notify('rag-start');
 
-        $this->retrieval($question, $k);
+        $this->retrieval($question);
 
-        $response = $this->chat($question);
+        $response = parent::chat($messages);
 
         $this->notify('rag-stop');
         return $response;
     }
 
-    public function streamAnswer(Message $question, int $k = 4): \Generator
+    public function stream(Message|array $messages): \Generator
     {
+        $question = \is_array($messages) ? $messages[0] : $messages;
+
         $this->notify('rag-start');
 
-        $this->retrieval($question, $k);
+        $this->retrieval($question);
 
-        yield from $this->stream($question);
+        yield from parent::stream($messages);
 
         $this->notify('rag-stop');
     }
 
-    protected function retrieval(Message $question, int $k = 4): void
+    protected function retrieval(Message $question): void
     {
-        $this->notify(
-            'rag-vectorstore-searching',
-            new VectorStoreSearching($question)
-        );
-        $documents = $this->searchDocuments($question->getContent(), $k);
-        $this->notify(
-            'rag-vectorstore-result',
-            new VectorStoreResult($question, $documents)
-        );
-
-        $originalInstructions = $this->instructions();
-        $this->notify(
-            'rag-instructions-changing',
-            new InstructionsChanging($originalInstructions)
-        );
-        $this->setSystemMessage($documents, $k);
-        $this->notify(
-            'rag-instructions-changed',
-            new InstructionsChanged($originalInstructions, $this->instructions())
+        $this->withDocumentsContext(
+            $this->retrieveDocuments($question)
         );
     }
 
     /**
      * Set the system message based on the context.
      *
-     * @param array<Document> $documents
-     * @param int $k
-     * @return \NeuronAI\AgentInterface|RAG
+     * @param Document[] $documents
      */
-    protected function setSystemMessage(array $documents, int $k)
+    public function withDocumentsContext(array $documents): AgentInterface
     {
-        $context = '';
-        $i = 0;
-        foreach ($documents as $document) {
-            if ($i >= $k) {
-                break;
-            }
-            $i++;
-            $context .= $document->content.' ';
-        }
+        $originalInstructions = $this->instructions();
 
-        return $this->withInstructions(
-            $this->instructions().PHP_EOL.PHP_EOL."# EXTRA INFORMATION AND CONTEXT".PHP_EOL.$context
-        );
+        // Remove the old context to avoid infinite grow
+        $newInstructions = $this->removeDelimitedContent($originalInstructions, '<EXTRA-CONTEXT>', '</EXTRA-CONTEXT>');
+
+        $newInstructions .= '<EXTRA-CONTEXT>';
+        foreach ($documents as $document) {
+            $newInstructions .= $document->getContent().PHP_EOL.PHP_EOL;
+        }
+        $newInstructions .= '</EXTRA-CONTEXT>';
+
+        $this->withInstructions(\trim($newInstructions));
+
+        return $this;
     }
 
     /**
      * Retrieve relevant documents from the vector store.
      *
-     * @param string $question
-     * @param int $k
-     * @return array<Document>
+     * @return Document[]
      */
-    private function searchDocuments(string $question, int $k): array
+    public function retrieveDocuments(Message $question): array
     {
-        $embedding = $this->embeddings()->embedText($question);
-        $docs = $this->vectorStore()->similaritySearch($embedding, $k);
+        $question = $this->applyPreProcessors($question);
+
+        $this->notify('rag-vectorstore-searching', new VectorStoreSearching($question));
+
+        $documents = $this->resolveVectorStore()->similaritySearch(
+            $this->resolveEmbeddingsProvider()->embedText($question->getContent()),
+        );
 
         $retrievedDocs = [];
 
-        foreach ($docs as $doc) {
+        foreach ($documents as $document) {
             //md5 for removing duplicates
-            $retrievedDocs[\md5($doc->content)] = $doc;
+            $retrievedDocs[\md5($document->getContent())] = $document;
         }
 
-        return \array_values($retrievedDocs);
+        $retrievedDocs = \array_values($retrievedDocs);
+
+        $this->notify('rag-vectorstore-result', new VectorStoreResult($question, $retrievedDocs));
+
+        return $this->applyPostProcessors($question, $retrievedDocs);
     }
 
-    public function setEmbeddingsProvider(EmbeddingsProviderInterface $provider): self
+    /**
+     * Apply a series of preprocessors to the asked question.
+     *
+     * @param Message $question The question to process.
+     * @return Message The processed question.
+     */
+    protected function applyPreProcessors(Message $question): Message
     {
-        $this->embeddingsProvider = $provider;
+        foreach ($this->preProcessors() as $processor) {
+            $this->notify('rag-preprocessing', new PreProcessing($processor::class, $question));
+            $question = $processor->process($question);
+            $this->notify('rag-preprocessed', new PreProcessed($processor::class, $question));
+        }
+
+        return $question;
+    }
+
+    /**
+     * Apply a series of postprocessors to the retrieved documents.
+     *
+     * @param Message $question The question to process the documents for.
+     * @param Document[] $documents The documents to process.
+     * @return Document[] The processed documents.
+     */
+    protected function applyPostProcessors(Message $question, array $documents): array
+    {
+        foreach ($this->postProcessors() as $processor) {
+            $this->notify('rag-postprocessing', new PostProcessing($processor::class, $question, $documents));
+            $documents = $processor->process($question, $documents);
+            $this->notify('rag-postprocessed', new PostProcessed($processor::class, $question, $documents));
+        }
+
+        return $documents;
+    }
+
+    /**
+     * Feed the vector store with documents.
+     *
+     * @param Document[] $documents
+     * @return void
+     */
+    public function addDocuments(array $documents): void
+    {
+        $this->resolveVectorStore()->addDocuments(
+            $this->resolveEmbeddingsProvider()->embedDocuments($documents)
+        );
+    }
+
+    /**
+     * @throws AgentException
+     */
+    public function setPreProcessors(array $preProcessors): RAG
+    {
+        foreach ($preProcessors as $processor) {
+            if (! $processor instanceof PreProcessorInterface) {
+                throw new AgentException($processor::class." must implement PreProcessorInterface");
+            }
+
+            $this->preProcessors[] = $processor;
+        }
+
         return $this;
     }
 
-    protected function embeddings(): EmbeddingsProviderInterface
+    /**
+     * @throws AgentException
+     */
+    public function setPostProcessors(array $postProcessors): RAG
     {
-        return $this->embeddingsProvider;
-    }
+        foreach ($postProcessors as $processor) {
+            if (! $processor instanceof PostProcessorInterface) {
+                throw new AgentException($processor::class." must implement PostProcessorInterface");
+            }
 
-    public function setVectorStore(VectorStoreInterface $store): self
-    {
-        $this->store = $store;
+            $this->postProcessors[] = $processor;
+        }
+
         return $this;
     }
 
-    protected function vectorStore(): VectorStoreInterface
+    /**
+     * @return PreProcessorInterface[]
+     */
+    protected function preProcessors(): array
     {
-        return $this->store;
+        return $this->preProcessors;
+    }
+
+    /**
+     * @return PostProcessorInterface[]
+     */
+    protected function postProcessors(): array
+    {
+        return $this->postProcessors;
     }
 }

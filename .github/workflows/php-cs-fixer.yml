@@ -1,0 +1,35 @@
+name: PHP CS Fixer
+
+on:
+    push:
+        branches: ["main"]
+        paths:
+            - '**.php'
+    pull_request:
+        branches: ["main"]
+        paths:
+            - '**.php'
+
+jobs:
+    php-cs-fixer:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.2'
+
+            - name: Install dependencies
+              run: composer install --no-progress --prefer-dist
+
+            - name: Run PHP-CS-Fixer
+              run: |
+                  ./vendor/bin/php-cs-fixer fix --allow-risky=yes
+
+            - uses: stefanzweifel/git-auto-commit-action@v5
+              with:
+                  commit_message: Apply PHP-CS-Fixer changes

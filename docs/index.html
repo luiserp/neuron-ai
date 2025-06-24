@@ -1,262 +1,644 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Neuron AI - Create full featured AI AGents in PHP</title>
-    <meta name="description" content="Open source framework to integrate AI Agents into your existing PHP application.">
-    <link rel="icon" href="img/logo.png" sizes="32x32" type="image/png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuron AI - Agent Development Kit for PHP</title>
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/header.css">
+    <link rel="stylesheet" href="css/hero.css">
+    <link rel="stylesheet" href="css/sections.css">
+    <link rel="stylesheet" href="css/newsletter.css">
+    <link rel="stylesheet" href="css/social.css">
+    <link rel="stylesheet" href="css/footer.css">
+    <link rel="stylesheet" href="css/ai-features.css">
+    <link rel="stylesheet" href="css/consultation.css">
+    <link rel="stylesheet" href="css/responsive.css">
 
-    <!-- Essential Open Graph tags -->
-    <meta property="og:title" content="Neuron AI - PHP framework for AI Agents">
-    <meta property="og:description" content="Open Source Framework To Create Full Featured AI Agents in PHP.">
-    <meta property="og:image" content="img/neuron-ai-php-framework.png">
-    <meta property="og:url" content="https://neuron-ai.dev">
-    <meta property="og:type" content="website">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <!-- Twitter Card tags -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Neuron AI - PHP framework for AI Agents">
-    <meta name="twitter:description" content="Open Source Framework To Create Full Featured AI Agents in PHP.">
-    <meta name="twitter:image" content="img/neuron-ai-php-framework.png">
+    <script defer src="https://cloud.umami.is/script.js"
+            data-website-id="4a0aa25b-8a8b-4335-a981-a49851ea6294"></script>
 
-    <!-- custom.css -->
-    <link rel="stylesheet" href="css/custom.css">
-    <!-- bootstrap.min.css -->
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-	<!-- font-awesome -->
-    <link rel="stylesheet" href="font-awesome-4.7.0/css/font-awesome.min.css">
-
-    <!-- AOS -->
-    <link rel="stylesheet" href="css/aos.css">
-
-    <!-- Umami Analitycs  -->
-    <script defer src="https://cloud.umami.is/script.js" data-website-id="4a0aa25b-8a8b-4335-a981-a49851ea6294"></script>
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
 </head>
-
 <body>
-    <!-- banner -->
-    <div class="jumbotron jumbotron-fluid" id="banner" style="background-image: url(img/banner-bk.jpg);">
-        <div class="mx-5 px-5 mx-lg-5 px-lg-5 mx-md-4 mx-sm-4 px-md-0 px-sm-0">
-            <header>
-                <div class="row justify-content-between">
-                    <div class="col-3">
-                        <img src="img/logo.png" alt="logo">
-                    </div>
-                    <div class="col-9 align-self-center text-right">
-                        <a href="https://inspector.dev" target="_blank" class="text-white lead">Inspector.dev</a>
-                        &nbsp; &middot; &nbsp;
-                        <a href="https://github.com/inspector-apm/neuron-ai" target="_blank" class="text-white lead">GitHub</a>
-                    </div>
-                </div>
-            </header>
-
-            <div class="row align-items-center">
-                <div class="col-lg-7">
-                    <h1 data-aos="fade" data-aos-easing="linear" data-aos-duration="800" data-aos-once="true" class="display-3 text-white font-weight-bold my-5">
-                        Create Full Featured
-                        AI Agents in PHP
-                    </h1>
-                    <p data-aos="fade" data-aos-easing="linear" data-aos-duration="800" data-aos-once="true" class="lead text-white my-4">
-                        <strong>Neuron AI</strong> is an open source framework
-                        <br> to integrate AI Agents into your existing PHP application.
-                    </p>
-                    <a href="https://docs.neuron-ai.dev"
-                       data-aos="fade" data-aos-easing="linear"
-                       data-aos-duration="1000" data-aos-once="true"
-                       class="btn my-4 font-weight-bold atlas-cta cta-green"
-                       target="_blank"
-                    >
-                        Documentation
-                    </a>
-
-                    <a href="https://github.com/inspector-apm/neuron-ai"
-                       data-aos="fade" data-aos-easing="linear"
-                       data-aos-duration="1000" data-aos-once="true"
-                       class="btn my-4 font-weight-bold atlas-cta cta-grey"
-                       target="_blank"
-                    >
-                        GitHub
-                    </a>
-                </div>
-
-                <div class="col-lg-5 px-md-0 px-sm-0 px-lg-0 px-xl-0 mx-sm-0 mx-md-0">
-                    <iframe width="100%" height="800" src="https://sibforms.com/serve/MUIFAAMdWTRm849tvckL1pXIlo_lBsJcknyGVd8zzeqFasyZ-yfncsHD3-EAJFMtfJ4s-kKwUV8T1S8KjfKSLbp9cUawU-kLgtBVm7lKVMiHXDHSukhT9WZMWFaA_NgSuqTX9KK_tbxyaVXI5iWFKWLHVVOs_FX4CGgJD57kGGDSr1dMQrfYjOerdhHYl97QLp-M6vM6T-Rkx6Oe" frameborder="0" scrolling="auto" allowfullscreen style="display: block;margin-left: auto;margin-right: auto;max-width: 100%;"></iframe>
-                </div>
-            </div>
+<header id="header" class="header">
+    <div class="container">
+        <div class="logo">
+            <span>Neuron</span>AI
         </div>
+        <nav class="nav">
+            <button class="mobile-menu-toggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <ul class="nav-list">
+                <li><a href="#hero">Home</a></li>
+                <li><a href="#use-cases">Use Cases</a></li>
+                <li><a href="#observability">Observability</a></li>
+                <li><a href="#ebook">Ebook</a></li>
+                <li><a href="#blog">Blog</a></li>
+                <li><a href="https://github.com/inspector-apm/neuron-ai" target="_blank" class="btn btn-small">
+                    <i class="fab fa-github" style="margin-right: 5px;"></i> GitHub</a>
+                </li>
+                <li>
+                    <!-- Place this tag where you want the button to render. -->
+                    <a class="github-button" href="https://github.com/inspector-apm/neuron-ai" data-color-scheme="no-preference: light; light: light; dark: dark;" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star inspector-apm/neuron-ai on GitHub">Star</a>
+                </li>
+            </ul>
+        </nav>
     </div>
-    <!-- three-blcok -->
-    <div class="container my-5 py-2">
-        <h2 class="text-center font-weight-bold my-5">
-			The Complete Toolkit For Your AI Journey in PHP
-		</h2>
-        <div class="row">
-            <div data-aos="fade-up" data-aos-delay="0" data-aos-duration="800" data-aos-once="true" class="col-md-4 text-center">
-                <img src="img/smart-protect-1.jpg" alt="Anti-spam" class="mx-auto">
-                <h4>Portable Agents</h4>
-                <p>
-					The Agent entity is designed to be extended to encapsulate all the components it needs.
-					You can attach Tools, Vector Stores, Embedding providers and more, to complete complex tasks.
-				</p>
-            </div>
-            <div data-aos="fade-up" data-aos-delay="400" data-aos-duration="800" data-aos-once="true" class="col-md-4 text-center">
-                <img src="img/smart-protect-3.jpg" alt="Smart Scan" class="mx-auto">
-                <h4>Retrieval-Augmented Generation (RAG)</h4>
-                <p>
-					Create RAG systems to use the powerful capabilities of LLMs on your own private data. Your agents can accurately answer questions about your internal company's data.
-				</p>
-            </div>
-            <div data-aos="fade-up" data-aos-delay="200" data-aos-duration="800" data-aos-once="true" class="col-md-4 text-center">
-                <img src="img/smart-protect-2.jpg" alt="Phishing Detect" class="mx-auto">
-                <h4>Observability</h4>
-                <p>
-					Neuron is designed with built-in observability features, so you can monitor AI agents were running to help you move from prototype to production with confidence.<br><br>
-					Powered by <a href="https://inspector.dev" target="_blank">Inspector.dev</a>
-				</p>
-            </div>
-        </div>
-    </div>
-    <!-- feature (skew background) -->
-    <div class="jumbotron jumbotron-fluid feature" id="feature-first">
-        <div class="container my-5">
-            <div class="row justify-content-between text-center text-md-left">
-                <div data-aos="fade-right" data-aos-duration="800" data-aos-once="true" class="col-md-6">
-                    <h2 class="font-weight-bold">Give Agents the ability to interact with your application context and services</h2>
-                    <p class="my-4">
-						Tools enable LLMs to go beyond generating text by facilitating interaction with your application services, or external APIs.
-					</p>
-					<p class="mb-4">
-						Think about Tools as special functions that your AI agent can use when it needs to perform specific tasks. They let you extend your Agent's capabilities by giving it access to specific functions it can call.
-					</p>
-                    <a href="https://docs.neuron-ai.dev/tools-and-function-calls" class="btn my-4 font-weight-bold atlas-cta cta-blue" target="_blank">Learn about Tools</a>
-                </div>
-                <div data-aos="fade-left" data-aos-duration="1000" data-aos-once="true" class="col-md-6 align-self-center">
-                    <img src="img/nauron-ai-agent-definition-php.png" alt="Take a look inside" class="mx-auto d-block">
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- feature (green background) -->
-    <div class="jumbotron jumbotron-fluid feature" id="feature-last">
+</header>
+
+<main>
+    <section id="hero" class="hero">
         <div class="container">
-            <div class="row justify-content-between text-center text-md-left">
-                <div data-aos="fade-left" data-aos-duration="800" data-aos-once="true" class="col-md-6 flex-md-last">
-                    <h2 class="font-weight-bold">
-						Execute multi turns conversations thanks to the internal Agent memory
-					</h2>
-                    <p class="my-4">
-                        Neuron AI has a built-in system to manage the memory of a chat session you perform with the agent.
-                    </p>
-					<p class="mb-4">
-						In many Q&A applications, you can have a back-and-forth conversation with the LLM, meaning the application needs some sort of "memory" of past questions and answers, and some logic for incorporating those into its current thinking.
-					</p>
-					<p class="mb-4">
-						You don't have to worry about that, Neuron Agents already remember past messages.
-					</p>
-                    <a href="https://docs.neuron-ai.dev/chat-history-and-memory"
-					class="btn my-4 font-weight-bold atlas-cta cta-blue" target="_blank">Learn about Memory</a>
-                </div>
-                <div data-aos="fade-right" data-aos-duration="800" data-aos-once="true" class="col-md-6 align-self-center flex-md-first">
-                    <img src="img/neuron-ai-agents-php-multi-turns.png" alt="Safe and reliable" class="mx-auto d-block">
+            <div class="hero-content">
+                <h1>Build Powerful AI Agents in PHP</h1>
+                <p>Neuron ADK is the first enterprise-ready Agent Development Kit for PHP. Deploy AI-powered solutions
+                    quickly with the language your team already knows.</p>
+                <div class="hero-buttons">
+                    <a href="https://docs.neuron-ai.dev/" target="_blank" class="btn btn-primary">Documentation</a>
+                    <a href="https://github.com/inspector-apm/neuron-ai" target="_blank" class="btn btn-secondary"><i
+                        class="fab fa-github" style="margin-right: 5px;"></i> GitHub</a>
                 </div>
             </div>
+            <div class="hero-newsletter">
+                <h2>Stay Updated</h2>
+                <p>Get informative articles, papers, and detailed guides on how to implement
+                    agentic solutions with Neuron AI.</p>
+                <iframe width="100%" height="370"
+                        src="https://sibforms.com/serve/MUIFANKlaxPgZcgCq8GuaOW-gdqAFaZEsVR2cj5lCnsPi4Ybw0ybRleBgOznpt4J_37IDn2J_mrJb429As--MGgkcJ3vyV1bsMN5ngmytcDINdqsdv3WrlpGYVSWIUTlGx_sOHXu6Zh6Fu5lSQVCRFbZ-WfLGgrX521B3A9GIBKe4sYUJe9tMfmZsQgMLhS9uBgMn8wuBwS3Z4UL"
+                        frameborder="0" scrolling="auto" allowfullscreen></iframe>
+            </div>
         </div>
-    </div>
+    </section>
 
-    <!-- client -->
-    <div class="jumbotron jumbotron-fluid">
+    <section id="use-cases" class="use-cases section-padding">
         <div class="container">
-			<h4 class="text-center my-4">
-				Trusted and used in production by companies across the world
-			</h4>
-            <div class="row">
-                <div class="col-sm-4 col-md-2 py-2 align-self-center">
-                    <img src="img/client-1.png" class="mx-auto d-block">
+            <div class="section-header">
+                <h2>Get Inspired By Community Use Cases</h2>
+                <p>Discover how businesses are leveraging Neuron ADK to create powerful AI solutions</p>
+            </div>
+
+            <div class="use-cases-grid">
+                <div class="use-case-card">
+                    <div class="use-case-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <a href="https://github.com/asterixcapri/neuron-mind"
+                       target="_blank">
+                        <h3>NeuronMind - Agentic Workflow</h3>
+                    </a>
+                    <p style="margin-bottom: 20px;">
+                        A fully working example that demonstrates how to build an agentic AI assistant in PHP, powered by NeuronAI.
+                    </p>
+                    <a href="https://github.com/asterixcapri/neuron-mind"
+                       target="_blank" class="blog-link">Read More →</a>
                 </div>
-                <div class="col-sm-4 col-md-2 py-2 align-self-center">
-                    <img src="img/client-2.png" class="mx-auto d-block">
+
+                <div class="use-case-card">
+                    <div class="use-case-icon">
+                        <i class="fas fa-folder-open"></i>
+                    </div>
+                    <a href="https://dev.to/robertobutti/building-a-rag-retrieval-augmented-generation-system-in-php-with-neuron-ai-4jmo"
+                       target="_blank">
+                        <h3>Building a RAG (Retrieval-Augmented Generation)</h3>
+                    </a>
+                    <p style="margin-bottom: 20px;">
+                        In this article, Roberto explores how to build a simple but powerful Retrieval-Augmented Generation
+                        (RAG) system using NeuronAI and Ollama.
+                    </p>
+                    <a href="https://dev.to/robertobutti/building-a-rag-retrieval-augmented-generation-system-in-php-with-neuron-ai-4jmo"
+                       target="_blank" class="blog-link">Read More →</a>
                 </div>
-                <div class="col-sm-4 col-md-2 py-2 align-self-center">
-                    <img src="img/client-3.png" class="mx-auto d-block">
+
+                <div class="use-case-card">
+                    <div class="use-case-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <a href="https://davidecariola.it/blog/ho-creato-il-mio-primo-ai-agent"
+                       target="_blank">
+                        <h3>Customer Service Agent</h3>
+                    </a>
+                    <p style="margin-bottom: 20px;">
+                        Davide Cariola created an agent to support the customer service better engaging with customers.
+                        It runs on Anthropic claude 3.5 model.
+                    </p>
+                    <a href="https://davidecariola.it/blog/ho-creato-il-mio-primo-ai-agent"
+                       target="_blank" class="blog-link">Read More →</a>
                 </div>
-                <div class="col-sm-4 col-md-2 py-2 align-self-center">
-                    <img src="img/client-4.png" class="mx-auto d-block">
+
+                <div class="use-case-card">
+                    <div class="use-case-icon">
+                        <i class="fas fa-pen-fancy"></i>
+                    </div>
+                    <a href="https://dev.to/robertobutti/building-my-first-ai-agent-with-neuronai-and-ollama-2kdg?utm_source=laravelnews&utm_medium=link&utm_campaign=laravelnews/"
+                       target="_blank">
+                        <h3>Technical Content Reviewer</h3>
+                    </a>
+                    <p style="margin-bottom: 20px;">Roberto Butti created an Agent to automatically review technical articles
+                        and provide suggestions. He use Ollama to run llama3.2:latest model locally.</p>
+                    <a href="https://dev.to/robertobutti/building-my-first-ai-agent-with-neuronai-and-ollama-2kdg?utm_source=laravelnews&utm_medium=link&utm_campaign=laravelnews/"
+                       target="_blank" class="blog-link">Read More →</a>
                 </div>
-                <div class="col-sm-4 col-md-2 py-2 align-self-center">
-                    <img src="img/client-5.png" class="mx-auto d-block">
+
+                <div class="use-case-card">
+                    <div class="use-case-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <a href="https://dev.to/razielrodrigues/instaanalyzer-an-ai-instagram-analyst-powered-by-php-neuron-ai-and-bright-data-1041"
+                       target="_blank">
+                        <h3>Instagram Analyst</h3>
+                    </a>
+                    <p style="margin-bottom: 20px;">
+                        Raziel Rodrigues - Scrape, Analyze, Optimize, Let AI decode Instagram profiles for you.
+                        He used Mistral LLM and Brightdata MCP Server.
+                    </p>
+                    <a href="https://dev.to/razielrodrigues/instaanalyzer-an-ai-instagram-analyst-powered-by-php-neuron-ai-and-bright-data-1041"
+                       target="_blank" class="blog-link">Read More →</a>
                 </div>
-                <div class="col-sm-4 col-md-2 py-2 align-self-center">
-                    <img src="img/client-6.png" class="mx-auto d-block">
+
+                <div class="use-case-card">
+                    <div class="use-case-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <a href="https://www.youtube.com/watch?v=-_e16azMyn4"
+                       target="_blank">
+                        <h3>Process Automation</h3>
+                    </a>
+                    <p style="margin-bottom: 20px;">Live coding creating your first AI Agent with Neuron AI and Ollama.</p>
+                    <a href="https://www.youtube.com/watch?v=-_e16azMyn4"
+                       target="_blank" class="blog-link">Read More →</a>
+                </div>
+
+                <div class="use-case-card">
+                    <div class="use-case-icon">
+                        <i class="fas fa-person"></i>
+                    </div>
+                    <a href="https://dev.to/razielrodrigues/neuron-ai-o-framework-php-de-inteligencia-artificial-37nm"
+                       target="_blank">
+                        <h3>AI Comedian</h3>
+                    </a>
+                    <p style="margin-bottom: 20px;">Create an agent who learns a script and is able to act in Portuguese.</p>
+                    <a href="https://dev.to/razielrodrigues/neuron-ai-o-framework-php-de-inteligencia-artificial-37nm"
+                       target="_blank" class="blog-link">Read More →</a>
+                </div>
+
+                <div class="use-case-card">
+                    <div class="use-case-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <a href="https://inspector.dev/mysql-ai-toolkit-bringing-intelligence-to-your-database-layer-in-php/?utm_source=neuron&utm_medium=link&utm_campaign=link"
+                       target="_blank">
+                        <h3>Data Analyst Agent</h3>
+                    </a>
+                    <p style="margin-bottom: 20px;">Learn how to create AI Agents able to generate detailed reports from your database.</p>
+                    <a href="https://inspector.dev/mysql-ai-toolkit-bringing-intelligence-to-your-database-layer-in-php/?utm_source=neuron&utm_medium=link&utm_campaign=link"
+                       target="_blank" class="blog-link">Read More →</a>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- contact -->
-    <div class="jumbotron jumbotron-fluid" id="contact" style="background-image: url(img/contact-bk.jpg);">
-        <div class="container my-5">
-            <div class="row align-items-center">
-                <div class="col-md-6 text-white">
-                    <h2 class="font-weight-bold">
-                        Get Educational Contents
-                    </h2>
-                    <p class="lead my-4">
-                        Receive our technical papers and blog articles for PHP developers
-                        looking to start their AI journey with strong fundamentals.
+    <section id="features" class="ai-features section-padding">
+        <div class="container">
+            <div class="section-header">
+                <h2>Don’t just use Neuron, build on top of it</h2>
+                <p>Everything you need to build sophisticated AI architectures with PHP</p>
+            </div>
+
+            <div class="ai-features-grid" style="margin-bottom: 30px;">
+                <div class="ai-feature-card">
+                    <div class="ai-feature-icon">
+                        <i class="fas fa-search-plus"></i>
+                    </div>
+                    <h3>Highly Customizable</h3>
+                    <p style="margin-bottom: 20px;">
+                        The flexible components and architecture allow
+                        you to build around your own specifications and use-cases.
+                        Whether you’re building a simple RAG app or a complex agentic pipeline.
                     </p>
-                    <p class="lead my-4">
-                        You will learn how to approach AI systems in the right way,
-                        understand the most important technical concepts behind LLMs, and how to
-                        start implementing your AI solutions into your PHP application
-                        with the Neuron AI framework.
+                    <a href="https://docs.neuron-ai.dev/advanced/rag" target="_blank">
+                        Learn More
+                    </a>
+                </div>
+
+                <div class="ai-feature-card">
+                    <div class="ai-feature-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h3>Build With Leading Providers</h3>
+                    <p style="margin-bottom: 20px;">
+                        Have the freedom of choice. Thanks to our partnerships with leading LLM providers,
+                        vector databases, and AI tools such as OpenAI, Gemini, Anthropic,
+                        Pinecone, Elasticsearch, and so many more.
+                    </p>
+                    <a href="https://docs.neuron-ai.dev/" target="_blank">
+                        Learn More
+                    </a>
+                </div>
+
+                <div class="ai-feature-card">
+                    <div class="ai-feature-icon">
+                        <i class="fas fa-puzzle-piece"></i>
+                    </div>
+                    <h3>Composable AI Agent Capabilities</h3>
+                    <p style="margin-bottom: 20px;">Build modular agents with specialized toolkits. Mix and match capabilities to create custom AI solutions tailored to your specific business needs.</p>
+                    <a href="https://docs.neuron-ai.dev/tools#toolkits-composable-agent-capabilities" target="_blank">
+                        Learn More
+                    </a>
+                </div>
+            </div>
+
+
+            <div class="ai-features-grid">
+                <div class="ai-feature-card">
+                    <div class="ai-feature-icon">
+                        <i class="fas fa-search-plus"></i>
+                    </div>
+                    <h3>RAG Retrieval-Augmented Generation</h3>
+                    <p style="margin-bottom: 20px;">Implement powerful RAG capabilities in just a few lines of code. Connect your agents to knowledge bases and external data sources for enhanced accuracy and relevance.</p>
+                    <a href="https://docs.neuron-ai.dev/advanced/rag" target="_blank">
+                        Learn More
+                    </a>
+                </div>
+
+                <div class="ai-feature-card">
+                    <div class="ai-feature-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h3>Data Loaders</h3>
+                    <p style="margin-bottom: 20px;">
+                        Load data from a variety of sources, including CSV, JSON, and SQL databases to create a unified data model for your agents.
+                    </p>
+                    <a href="https://docs.neuron-ai.dev/components/data-loader" target="_blank">
+                        Learn More
+                    </a>
+                </div>
+
+                <div class="ai-feature-card">
+                    <div class="ai-feature-icon">
+                        <i class="fas fa-search-plus"></i>
+                    </div>
+                    <h3>MCP Connector</h3>
+                    <p style="margin-bottom: 20px;">
+                        Connect your agents to MCP Servers to enhance their ability to with external tools and services.
+                    </p>
+                    <a href="https://docs.neuron-ai.dev/advanced/mcp-connector" target="_blank">
+                        Learn More
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="consultation" class="consultation section-padding">
+        <div class="container">
+            <div class="section-header">
+                <h2>NeuronAI: Your Competitive Edge in the AI Revolution</h2>
+                <p>While competitors struggle with Python migrations, you can deliver AI agents using your existing PHP expertise.</p>
+            </div>
+
+            <div class="consultation-content">
+                <div class="consultation-text">
+                    <div class="urgency-badge">PHP Companies' Secret Weapon</div>
+                    <h3>Turn Customer AI Demands Into Profitable Opportunities</h3>
+                    <p>
+                        Your customers are demanding AI agents. Your competitors are scrambling to learn Python.
+                        <strong>You have NeuronAI.</strong>
                     </p>
 
-                    <p class="mt-5">
-                        Neuron is maintained by <a href="https://inspector.dev" target="_blank">Inspector.dev</a>
+                    <div class="consultation-highlights">
+                        <h4>Why NeuronAI Gives You The Advantage:</h4>
+                        <ul>
+                            <li><strong>Zero migration risks</strong> - Build AI agents with your existing PHP stack</li>
+                            <li><strong>Faster time-to-market</strong> - Deploy solutions while competitors are still learning</li>
+                            <li><strong>Lower development costs</strong> - No need to hire Python developers or retrain teams</li>
+                            <li><strong>Enterprise-ready platform</strong> - Production-grade AI agents from day one</li>
+                            <li><strong>Expert guidance included</strong> - Technical coaching to win and deliver projects</li>
+                        </ul>
+                    </div>
+
+                    <p><strong>NeuronAI isn't just a tool—it's your strategic advantage.</strong> While others abandon their PHP expertise, you leverage it to dominate the AI market.</p>
+                </div>
+
+                <div class="consultation-cta">
+                    <h4>Claim Your Competitive Advantage</h4>
+                    <p>
+                        Book a meeting with our technical team. Get a custom roadmap for turning AI requests
+                        into profitable projects using your PHP expertise.
                     </p>
-                    <ul class="list-unstyled">
-                        <li>Email : support@inspector.dev</li>
+                    <a href="https://calendly.com/inspector-support/30min" class="btn">Book a meeting</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="observability" class="observability section-padding">
+        <div class="container">
+            <div class="section-header">
+                <h2>Built-in Observability</h2>
+                <p>Monitor and troubleshoot your AI agents with ease</p>
+            </div>
+
+            <div class="observability-content">
+                <div class="observability-text">
+                    <h3>Seamless Integration with Inspector.dev</h3>
+                    <p>Neuron ADK comes with native integration for Inspector.dev, the leading monitoring tool for PHP
+                        applications.</p>
+
+                    <ul class="feature-list">
+                        <li>Real-time monitoring of agent performance</li>
+                        <li>Detailed logs of agent decision processes</li>
+                        <li>Automatic error detection and alerting</li>
+                        <li>Performance optimization insights</li>
+                        <li>Comprehensive analytics dashboard</li>
                     </ul>
+
+                    <a href="https://inspector.dev?utm_source=neuron&utm_medium=link&utm_campaign=link" target="_blank" class="btn btn-primary">Learn More</a>
                 </div>
-                <div class="col-md-6">
-                    <iframe width="100%" height="800" src="https://sibforms.com/serve/MUIFAAMdWTRm849tvckL1pXIlo_lBsJcknyGVd8zzeqFasyZ-yfncsHD3-EAJFMtfJ4s-kKwUV8T1S8KjfKSLbp9cUawU-kLgtBVm7lKVMiHXDHSukhT9WZMWFaA_NgSuqTX9KK_tbxyaVXI5iWFKWLHVVOs_FX4CGgJD57kGGDSr1dMQrfYjOerdhHYl97QLp-M6vM6T-Rkx6Oe" frameborder="0" scrolling="auto" allowfullscreen style="display: block;margin-left: auto;margin-right: auto;max-width: 100%;"></iframe>
-                </div>
+                <div class="observability-image"></div>
             </div>
         </div>
-    </div>
+    </section>
 
-	<!-- copyright -->
-	<div class="jumbotron jumbotron-fluid" id="copyright">
+    <section id="ebook" class="ebook section-padding">
         <div class="container">
-            <div class="row justify-content-between">
-            	<div class="col-md-6 text-white align-self-center text-center text-md-left my-2">
-                    Copyright © 2025 Inspector SRL.
-                </div>
-                <div class="col-md-6 align-self-center text-center text-md-right my-2" id="social-media">
-                    <a href="https://www.facebook.com/profile.php?id=61574473883593" class="d-inline-block text-center ml-2" target="_blank">
-                    	<i class="fa fa-facebook" aria-hidden="true"></i>
-                    </a>
-                    <a href="https://x.com/neuronai_php" class="d-inline-block text-center ml-2" target="_blank">
-                    	<i class="fa fa-twitter" aria-hidden="true"></i>
-                    </a>
-                    <a href="https://medium.com/@valerio_27709" class="d-inline-block text-center ml-2" target="_blank">
-                    	<i class="fa fa-medium" aria-hidden="true"></i>
-                    </a>
-                    <a href="https://www.linkedin.com/company/neuron-ai-php-framework" class="d-inline-block text-center ml-2" target="_blank">
-                    	<i class="fa fa-linkedin" aria-hidden="true"></i>
-                    </a>
+            <div class="ebook-container">
+                <div class="ebook-image"></div>
+                <div class="ebook-content">
+                    <h2>Start with AI Agents in PHP</h2>
+                    <p class="ebook-subtitle">The definitive guide to building AI-powered agents with PHP</p>
+                    <p class="ebook-description">Position yourself in the AI Agent era with this comprehensive resource
+                        that shows exactly how to get there using PHP. Learn from practical examples and real-world use
+                        cases.</p>
+                    <div class="ebook-info">
+                        <div class="ebook-price">
+                            <span class="price">$8.90</span>
+                            <span class="availability">Available on Amazon and Google Play</span>
+                        </div>
+                        <div class="ebook-buttons">
+                            <a href="https://www.amazon.com/dp/B0F1YX8KJB" target="_blank" class="btn btn-primary">Get
+                                on Amazon</a>
+                            <a href="https://play.google.com/store/books/details?pcampaignid=books_read_action&id=agJPEQAAQBAJ&pli=1"
+                               target="_blank" class="btn btn-secondary">Get on Google Play</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+    </section>
+
+    <section id="blog" class="section-padding">
+        <!--
+        Blog Row 1
+        -->
+        <div class="container">
+            <div class="section-header">
+                <h2>Latest from our blog</h2>
+                <p>Stay up to date with the latest trends and best practices in AI agent development</p>
+            </div>
+
+            <div class="blog-grid">
+                <article class="blog-card">
+                    <div class="blog-image" style="background-image: url('images/rag-article.png')"></div>
+                    <div class="blog-content">
+                        <time class="blog-date">June 03, 2025</time>
+                        <a href="https://inspector.dev/how-to-create-a-rag-agent-with-neuron-adk-for-php/?utm_source=neuron&utm_medium=link&utm_campaign=link"
+                           target="_blank">
+                            <h3 class="blog-title">How to Create a RAG Agent with Neuron ADK for PHP</h3>
+                        </a>
+                        <p class="blog-excerpt">Struggling with RAG? Learn how retrieval works to build intelligent AI
+                            agents, then implement your first RAG system with Neuron ADK for PHP.</p>
+                        <a href="https://inspector.dev/how-to-create-a-rag-agent-with-neuron-adk-for-php/?utm_source=neuron&utm_medium=link&utm_campaign=link"
+                           target="_blank" class="blog-link">Read More →</a>
+                    </div>
+                </article>
+
+                <article class="blog-card">
+                    <div class="blog-image"
+                         style="background-image: url('images/langchain-alternative-article.png')"></div>
+                    <div class="blog-content">
+                        <time class="blog-date">May 23, 2025</time>
+                        <a href="https://inspector.dev/introducing-web-search-capabilities-for-php-ai-agents/?utm_source=neuron&utm_medium=link&utm_campaign=link"
+                           target="_blank">
+                            <h3 class="blog-title">LangChain alternative for PHP developers</h3>
+                        </a>
+                        <p class="blog-excerpt">Are you looking for LangChain alternative in PHP? Neuron AI framework is
+                            leading AI Agents development in PHP.</p>
+                        <a href="https://inspector.dev/introducing-web-search-capabilities-for-php-ai-agents/?utm_source=neuron&utm_medium=link&utm_campaign=link"
+                           target="_blank" class="blog-link">Read More →</a>
+                    </div>
+                </article>
+
+                <article class="blog-card">
+                    <div class="blog-image" style="background-image: url('images/php-article.png')"></div>
+                    <div class="blog-content">
+                        <time class="blog-date">May 12, 2025</time>
+                        <a href="https://inspector.dev/php-the-dark-horse-no-one-saw-coming-in-ai-agents-development/?utm_source=neuron&utm_medium=link&utm_campaign=link"
+                           target="_blank">
+                            <h3 class="blog-title">PHP, the Dark Horse No One Saw Coming In AI Agents development</h3>
+                        </a>
+                        <p class="blog-excerpt">Learn how PHP is silently revolutionizing the AI agents development by
+                            leveraging PHP&#039;s massive reach, challenging Python&#039;s dominance.</p>
+                        <a href="https://inspector.dev/php-the-dark-horse-no-one-saw-coming-in-ai-agents-development/?utm_source=neuron&utm_medium=link&utm_campaign=link"
+                           target="_blank" class="blog-link">Read More →</a>
+                    </div>
+                </article>
+            </div>
+        </div>
+
+        <!--
+        Blog Row 2
+        -->
+        <div class="container" style="margin-top: 50px;">
+            <div class="blog-grid">
+                <article class="blog-card">
+                    <div class="blog-image" style="background-image: url('images/datanalyst-article.png')"></div>
+                    <div class="blog-content">
+                        <time class="blog-date">June 02, 2025</time>
+                        <a href="https://inspector.dev/mysql-ai-toolkit-bringing-intelligence-to-your-database-layer-in-php/?utm_source=neuron&utm_medium=link&utm_campaign=link"
+                           target="_blank">
+                            <h3 class="blog-title">Create A DataAnalyst Agent In PHP</h3>
+                        </a>
+                        <p class="blog-excerpt">NeuronAI MySQL toolkit transforms PHP applications with AI agents that understand your database. No Python required.</p>
+                        <a href="https://inspector.dev/mysql-ai-toolkit-bringing-intelligence-to-your-database-layer-in-php/?utm_source=neuron&utm_medium=link&utm_campaign=link"
+                           target="_blank" class="blog-link">Read More →</a>
+                    </div>
+                </article>
+
+                <article class="blog-card">
+                    <div class="blog-image"
+                         style="background-image: url('images/youtube.png')"></div>
+                    <div class="blog-content">
+                        <time class="blog-date">May 15, 2025</time>
+                        <a href="https://www.youtube.com/watch?v=fJSX8wWIDO8"
+                           target="_blank">
+                            <h3 class="blog-title">Create & Monitor AI Agents In PHP</h3>
+                        </a>
+                        <p class="blog-excerpt">A beginner-friendly tutorial where you'll learn how to create
+                            and monitor AI agents into a Laravel applications using Neuron AI framework & Inspector.dev</p>
+                        <a href="https://www.youtube.com/watch?v=fJSX8wWIDO8"
+                           target="_blank" class="blog-link">Read More →</a>
+                    </div>
+                </article>
+
+                <article class="blog-card">
+                    <div class="blog-image" style="background-image: url('images/webinar-article.png')"></div>
+                    <div class="blog-content">
+                        <time class="blog-date">May 29, 2025</time>
+                        <a href="https://www.youtube.com/watch?v=q6GqgPMUJFY"
+                           target="_blank">
+                            <h3 class="blog-title">Webinar - Add AI Features to Your PHP Apps</h3>
+                        </a>
+                        <p class="blog-excerpt">Learn how to create AI Agents into your existing PHP
+                            application with Neuron AI Agent Development Kit.</p>
+                        <a href="https://www.youtube.com/watch?v=q6GqgPMUJFY"
+                           target="_blank" class="blog-link">Read More →</a>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section id="newsletter-bottom" class="newsletter section-padding">
+        <div class="container">
+            <div class="newsletter-container">
+                <div class="newsletter-content">
+                    <h2>Join the Neuron Community</h2>
+                    <p>Get early access to new features, tutorials, and expert tips for building AI agents in PHP.</p>
+                </div>
+
+                <iframe width="100%" height="370"
+                        src="https://sibforms.com/serve/MUIFANKlaxPgZcgCq8GuaOW-gdqAFaZEsVR2cj5lCnsPi4Ybw0ybRleBgOznpt4J_37IDn2J_mrJb429As--MGgkcJ3vyV1bsMN5ngmytcDINdqsdv3WrlpGYVSWIUTlGx_sOHXu6Zh6Fu5lSQVCRFbZ-WfLGgrX521B3A9GIBKe4sYUJe9tMfmZsQgMLhS9uBgMn8wuBwS3Z4UL"
+                        frameborder="0" scrolling="auto" allowfullscreen></iframe>
+            </div>
+        </div>
+    </section>
+
+    <section id="neuron-features" class="features section-padding">
+        <div class="container">
+            <div class="features-content">
+                <div class="features-text">
+                    <h2>Integrate Autonomous Agents Into Your Existing PHP Application</h2>
+                    <p>The Agent entity is designed to be extended to create your agents as standalone components in
+                        your application.</p>
+                    <p>This ensures the portability of your agent because all the moving parts are encapsulated into a
+                        single entity that you can run wherever you want in your application.</p>
+                    <p>You can even create agents with specific skills and tools, and release them as public packages
+                        that other developers can integrate in their Agentic systems.</p>
+                    <div class="ebook-buttons">
+                        <a href="https://docs.neuron-ai.dev/" target="_blank" class="btn btn-primary">Get Started</a>
+                        <a href="https://github.com/inspector-apm/neuron-ai" target="_blank" class="btn btn-secondary">
+                            <i class="fab fa-github" style="margin-right: 5px;"></i>
+                            GitHub
+                        </a>
+                    </div>
+                </div>
+                <div class="features-image">
+                    <img src="images/neuron-ai-architecture.png" alt="AI Integration">
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<section class="social-links">
+    <div class="container">
+        <div class="social-links-container">
+            <a href="https://www.linkedin.com/company/neuron-ai-php-framework" class="social-link" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-linkedin-in"></i>
+            </a>
+            <a href="https://x.com/neuronai_php" class="social-link" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-twitter"></i>
+            </a>
+            <a href="https://www.instagram.com/neuronai_php_adk/" class="social-link" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://github.com/inspector-apm/neuron-ai/discussions" class="social-link" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-github"></i>
+            </a>
+            <a href="https://medium.com/@valerio_27709" class="social-link" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-medium-m"></i>
+            </a>
+            <a href="#hero" class="social-link">
+                <i class="fas fa-envelope"></i>
+            </a>
+        </div>
     </div>
+</section>
 
-    <!-- AOS -->
-    <script src="js/aos.js"></script>
-    <script>
-      AOS.init({
-      });
-    </script>
+<footer class="footer">
+    <div class="container">
+        <div class="footer-grid">
+            <div class="footer-column">
+                <div class="footer-logo">
+                    <span>Neuron</span>AI
+                </div>
+                <p class="footer-tagline">The Agent Development Kit for PHP</p>
+            </div>
+
+            <div class="footer-column">
+                <h4>Resources</h4>
+                <ul class="footer-links">
+                    <li><a href="https://docs.neuron-ai.dev/">Documentation</a></li>
+                    <li><a href="https://github.com/inspector-apm/neuron-ai">GitHub Repository</a></li>
+                    <li><a href="#ebook">Ebook</a></li>
+                    <li><a href="#blog">Blog</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column">
+                <h4>Product</h4>
+                <ul class="footer-links">
+                    <li><a href="#use-cases">Use Cases</a></li>
+                    <li><a href="#observability">Observability</a></li>
+                    <li><a href="https://docs.neuron-ai.dev/">Getting Started</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column">
+                <h4>Company</h4>
+                <ul class="footer-links">
+                    <li><a href="https://inspector.dev?utm_source=neuron&utm_medium=link&utm_campaign=link">About Us</a></li>
+                    <li><a href="https://inspector.dev/blog/?utm_source=neuron&utm_medium=link&utm_campaign=link">Blog</a></li>
+                    <li><a href="https://inspector.dev/testimonials/?utm_source=neuron&utm_medium=link&utm_campaign=link">Testimonials</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2025 Inspector SRL. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // Minimal JavaScript for mobile menu toggle
+    document.querySelector('.mobile-menu-toggle').addEventListener('click', function () {
+        document.querySelector('.nav-list').classList.toggle('active');
+        this.classList.toggle('active');
+    });
+
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+
+            // Close mobile menu if open
+            document.querySelector('.nav-list').classList.remove('active');
+            document.querySelector('.mobile-menu-toggle').classList.remove('active');
+        });
+    });
+</script>
 </body>
-
 </html>

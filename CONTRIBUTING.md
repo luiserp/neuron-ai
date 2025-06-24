@@ -4,7 +4,7 @@
 
 The following is a set of guidelines for contributing to the Neuron AI Framework. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request.
 
-## I don't want to read this whole thing I just have a question!!!
+## I don't want to read this whole thing, I just have a question!!!
 
 > Note: Please don't file an issue to ask a question. You'll get faster results by using the resources below.
 

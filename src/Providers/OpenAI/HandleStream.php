@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\Providers\OpenAI;
 
 use GuzzleHttp\Exception\GuzzleException;
-use NeuronAI\Chat\Messages\AssistantMessage;
+use NeuronAI\Chat\Enums\MessageRole;
+use NeuronAI\Chat\Messages\Message;
 use NeuronAI\Exceptions\ProviderException;
 use Psr\Http\Message\StreamInterface;
 
@@ -17,15 +20,13 @@ trait HandleStream
     {
         // Attach the system prompt
         if (isset($this->system)) {
-            \array_unshift($messages, new AssistantMessage($this->system));
+            \array_unshift($messages, new Message(MessageRole::SYSTEM, $this->system));
         }
-
-        $mapper = new MessageMapper($messages);
 
         $json = [
             'stream' => true,
             'model' => $this->model,
-            'messages' => $mapper->map(),
+            'messages' => $this->messageMapper()->map($messages),
             'stream_options' => ['include_usage' => true],
             ...$this->parameters
         ];
@@ -62,15 +63,15 @@ trait HandleStream
             }
 
             // Process tool calls
-            if (\array_key_exists('tool_calls', $line['choices'][0]['delta'])) {
+            if (isset($line['choices'][0]['delta']['tool_calls'])) {
                 $toolCalls = $this->composeToolCalls($line, $toolCalls);
                 continue;
             }
 
-            // Handle tool call
+            // Handle tool calls
             if ($line['choices'][0]['finish_reason'] === 'tool_calls') {
                 yield from $executeToolsCallback(
-                    $this->createToolMessage([
+                    $this->createToolCallMessage([
                         'content' => $text,
                         'tool_calls' => $toolCalls
                     ])
@@ -80,7 +81,7 @@ trait HandleStream
             }
 
             // Process regular content
-            $content = $line['choices'][0]['delta']['content']??'';
+            $content = $line['choices'][0]['delta']['content'] ?? '';
             $text .= $content;
 
             yield $content;
@@ -88,7 +89,7 @@ trait HandleStream
     }
 
     /**
-     * Recreate the tool_calls format of openai API from streaming.
+     * Recreate the tool_calls format from streaming OpenAI API.
      *
      * @param  array<string, mixed>  $line
      * @param  array<int, array<string, mixed>>  $toolCalls
@@ -96,15 +97,18 @@ trait HandleStream
      */
     protected function composeToolCalls(array $line, array $toolCalls): array
     {
-        foreach ($line['choices'][0]['delta']['tool_calls'] as $index => $call) {
+        foreach ($line['choices'][0]['delta']['tool_calls'] as $call) {
+            $index = $call['index'];
+
             if (!\array_key_exists($index, $toolCalls)) {
-                if ($name = $call['function']['name']??null) {
+                if ($name = $call['function']['name'] ?? null) {
                     $toolCalls[$index]['function'] = ['name' => $name, 'arguments' => ''];
                     $toolCalls[$index]['id'] = $call['id'];
                     $toolCalls[$index]['type'] = 'function';
                 }
             } else {
-                if ($arguments = $call['function']['arguments']??null) {
+                $arguments = $call['function']['arguments'] ?? null;
+                if ($arguments !== null) {
                     $toolCalls[$index]['function']['arguments'] .= $arguments;
                 }
             }

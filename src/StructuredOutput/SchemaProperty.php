@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\StructuredOutput;
 
 use Attribute;
@@ -11,5 +13,6 @@ class SchemaProperty
         public ?string $title = null,
         public ?string $description = null,
         public ?bool $required = null
-    ) {}
+    ) {
+    }
 }

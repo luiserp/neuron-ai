@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\Providers;
 
+use NeuronAI\Exceptions\ProviderException;
 use NeuronAI\Tools\ToolInterface;
 
 trait HandleWithTools
@@ -19,14 +22,17 @@ trait HandleWithTools
         return $this;
     }
 
-    public function findTool($name): ?ToolInterface
+    public function findTool($name): ToolInterface
     {
         foreach ($this->tools as $tool) {
             if ($tool->getName() === $name) {
-                return $tool;
+                // We return a copy to allow multiple call to the same tool.
+                return clone $tool;
             }
         }
 
-        return null;
+        throw new ProviderException(
+            "It seems the model is asking for a non-existing tool: {$name}. You could try writing more verbose tool descriptions and prompts to help the model in the task."
+        );
     }
 }

@@ -1,19 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\Providers\Anthropic;
 
-use GuzzleHttp\Exception\GuzzleException;
 use NeuronAI\Chat\Messages\Message;
 
 trait HandleStructured
 {
-    /**
-     * @param array<Message> $messages
-     * @param string $class
-     * @param array $response_format
-     * @return Message
-     * @throws GuzzleException
-     */
     public function structured(
         array $messages,
         string $class,

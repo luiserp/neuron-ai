@@ -1,11 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI;
 
+use GuzzleHttp\Promise\PromiseInterface;
 use NeuronAI\Chat\History\AbstractChatHistory;
 use NeuronAI\Chat\Messages\Message;
 use NeuronAI\Providers\AIProviderInterface;
 use NeuronAI\Tools\ToolInterface;
+use NeuronAI\Tools\Toolkits\ToolkitInterface;
 
 interface AgentInterface extends \SplSubject
 {
@@ -17,7 +21,7 @@ interface AgentInterface extends \SplSubject
 
     public function instructions(): string;
 
-    public function addTool(ToolInterface $tool): AgentInterface;
+    public function addTool(ToolInterface|ToolkitInterface|array $tools): AgentInterface;
 
     public function getTools(): array;
 
@@ -25,9 +29,11 @@ interface AgentInterface extends \SplSubject
 
     public function resolveChatHistory(): AbstractChatHistory;
 
-    public function observe(\SplObserver $observer, string $event = "*"): AgentInterface;
+    public function observe(\SplObserver $observer, string $event = "*"): self;
 
     public function chat(Message|array $messages): Message;
+
+    public function chatAsync(Message|array $messages): PromiseInterface;
 
     public function stream(Message|array $messages): \Generator;
 

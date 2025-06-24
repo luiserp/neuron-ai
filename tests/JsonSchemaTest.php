@@ -1,19 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\Tests;
 
 use NeuronAI\StructuredOutput\JsonSchema;
 use NeuronAI\StructuredOutput\SchemaProperty;
-use NeuronAI\Tests\Utils\Person;
-use NeuronAI\Tests\Utils\PersonWithAddress;
-use NeuronAI\Tests\Utils\PersonWithTags;
+use NeuronAI\Tests\Stubs\Person;
 use PHPUnit\Framework\TestCase;
 
 class JsonSchemaTest extends TestCase
 {
-    public function test_all_properties_required()
+    public function test_all_properties_required(): void
     {
-        $class = new class {
+        $class = new class () {
             public string $firstName;
             public string $lastName;
         };
@@ -30,14 +30,15 @@ class JsonSchemaTest extends TestCase
                     'type' => 'string',
                 ]
             ],
-            'required' => ['firstName', 'lastName']
+            'required' => ['firstName', 'lastName'],
+            'additionalProperties' => false,
         ], $schema);
     }
-    public function test_with_nullable_properties()
+    public function test_with_nullable_properties(): void
     {
-        $class = new class {
+        $class = new class () {
             public string $firstName;
-            public ?string $lastName;
+            public ?string $lastName = null;
         };
 
         $schema = (new JsonSchema())->generate($class::class);
@@ -50,15 +51,17 @@ class JsonSchemaTest extends TestCase
                 ],
                 'lastName' => [
                     'type' => ['string', 'null'],
+                    'default' => null
                 ]
             ],
-            'required' => ['firstName']
+            'required' => ['firstName'],
+            'additionalProperties' => false,
         ], $schema);
     }
 
-    public function test_with_default_value()
+    public function test_with_default_value(): void
     {
-        $class = new class {
+        $class = new class () {
             public string $firstName;
             public ?string $lastName = 'last name';
         };
@@ -76,13 +79,14 @@ class JsonSchemaTest extends TestCase
                     'type' => ['string', 'null'],
                 ]
             ],
-            'required' => ['firstName']
+            'required' => ['firstName'],
+            'additionalProperties' => false,
         ], $schema);
     }
 
-    public function test_with_attribute()
+    public function test_with_attribute(): void
     {
-        $class = new class {
+        $class = new class () {
             #[SchemaProperty(title: "The user first name", description: "The user first name")]
             public string $firstName;
         };
@@ -98,13 +102,14 @@ class JsonSchemaTest extends TestCase
                     'type' => 'string',
                 ]
             ],
-            'required' => ['firstName']
+            'required' => ['firstName'],
+            'additionalProperties' => false,
         ], $schema);
     }
 
-    public function test_nullable_property_with_attribute()
+    public function test_nullable_property_with_attribute(): void
     {
-        $class = new class {
+        $class = new class () {
             #[SchemaProperty(title: "The user first name", description: "The user first name", required: false)]
             public string $firstName;
         };
@@ -119,13 +124,14 @@ class JsonSchemaTest extends TestCase
                     'description' => 'The user first name',
                     'type' => 'string',
                 ]
-            ]
+            ],
+            'additionalProperties' => false,
         ], $schema);
     }
 
-    public function test_nested_object()
+    public function test_nested_object(): void
     {
-        $schema = (new JsonSchema())->generate(PersonWithAddress::class);
+        $schema = (new JsonSchema())->generate(Person::class);
 
         $this->assertEquals([
             'type' => 'object',
@@ -138,6 +144,12 @@ class JsonSchemaTest extends TestCase
                 ],
                 'address' => [
                     '$ref' => '#/definitions/Address'
+                ],
+                'tags' => [
+                    'type' => 'array',
+                    'items' => [
+                        '$ref' => '#/definitions/Tag'
+                    ]
                 ]
             ],
             'definitions' => [
@@ -157,33 +169,8 @@ class JsonSchemaTest extends TestCase
                         ]
                     ],
                     'required' => ['street', 'city', 'zip'],
-                ]
-            ],
-            'required' => ['firstName', 'lastName', 'address']
-        ], $schema);
-    }
-
-    public function test_array_of_objects()
-    {
-        $schema = (new JsonSchema())->generate(PersonWithTags::class);
-
-        $this->assertEquals([
-            'type' => 'object',
-            'properties' => [
-                'firstName' => [
-                    'type' => 'string',
+                    'additionalProperties' => false,
                 ],
-                'lastName' => [
-                    'type' => 'string',
-                ],
-                'tags' => [
-                    'type' => 'array',
-                    'items' => [
-                        '$ref' => '#/definitions/Tag'
-                    ]
-                ]
-            ],
-            'definitions' => [
                 'Tag' => [
                     'type' => 'object',
                     'properties' => [
@@ -192,10 +179,12 @@ class JsonSchemaTest extends TestCase
                             'type' => 'string',
                         ]
                     ],
-                    'required' => ['name']
+                    'required' => ['name'],
+                    'additionalProperties' => false,
                 ]
             ],
-            'required' => ['firstName', 'lastName', 'tags']
+            'required' => ['firstName', 'lastName', 'address', 'tags'],
+            'additionalProperties' => false,
         ], $schema);
     }
 }

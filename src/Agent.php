@@ -1,12 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI;
 
-use NeuronAI\Chat\Messages\ToolCallResultMessage;
-use NeuronAI\Observability\Events\AgentError;
-use NeuronAI\Observability\Events\ToolCalled;
-use NeuronAI\Observability\Events\ToolCalling;
-use NeuronAI\Chat\Messages\ToolCallMessage;
+use NeuronAI\Observability\Observable;
 
 class Agent implements AgentInterface
 {
@@ -17,36 +15,14 @@ class Agent implements AgentInterface
     use HandleChat;
     use HandleStream;
     use HandleStructured;
+    use Observable;
 
     /**
      * The system instructions.
      *
      * @var string
      */
-    protected string $instructions = 'Your are a helpful and friendly AI agent built with Neuron AI PHP framework.';
-
-    /**
-     * @var array<\SplObserver>
-     */
-    private array $observers = [];
-
-    protected function executeTools(ToolCallMessage $toolCallMessage): ToolCallResultMessage
-    {
-        $toolCallResult = new ToolCallResultMessage($toolCallMessage->getTools());
-
-        foreach ($toolCallResult->getTools() as $tool) {
-            $this->notify('tool-calling', new ToolCalling($tool));
-            try {
-                $tool->execute();
-            } catch (\Throwable $exception) {
-                $this->notify('error', new AgentError($exception));
-                throw $exception;
-            }
-            $this->notify('tool-called', new ToolCalled($tool));
-        }
-
-        return $toolCallResult;
-    }
+    protected string $instructions;
 
     public function withInstructions(string $instructions): AgentInterface
     {
@@ -56,51 +32,24 @@ class Agent implements AgentInterface
 
     public function instructions(): string
     {
-        return $this->instructions;
+        return 'Your are a helpful and friendly AI agent built with Neuron AI PHP framework.';
     }
 
-    private function initEventGroup(string $event = "*"): void
+    public function resolveInstructions(): string
     {
-        if (!isset($this->observers[$event])) {
-            $this->observers[$event] = [];
-        }
+        return $this->instructions ?? $this->instructions();
     }
 
-    private function getEventObservers(string $event = "*"): array
+    protected function removeDelimitedContent(string $text, string $openTag, string $closeTag): string
     {
-        $this->initEventGroup($event);
-        $group = $this->observers[$event];
-        $all = $this->observers["*"] ?? [];
+        // Escape special regex characters in the tags
+        $escapedOpenTag = \preg_quote($openTag, '/');
+        $escapedCloseTag = \preg_quote($closeTag, '/');
 
-        return \array_merge($group, $all);
-    }
+        // Create the regex pattern to match content between tags
+        $pattern = '/' . $escapedOpenTag . '.*?' . $escapedCloseTag . '/s';
 
-    public function observe(\SplObserver $observer, string $event = "*"): self
-    {
-        $this->attach($observer, $event);
-        return $this;
-    }
-
-    public function attach(\SplObserver $observer, string $event = "*"): void
-    {
-        $this->initEventGroup($event);
-        $this->observers[$event][] = $observer;
-    }
-
-    public function detach(\SplObserver $observer, string $event = "*"): void
-    {
-        foreach ($this->getEventObservers($event) as $key => $s) {
-            if ($s === $observer) {
-                unset($this->observers[$event][$key]);
-            }
-        }
-    }
-
-    public function notify(string $event = "*", $data = null): void
-    {
-        // Broadcasting the '$event' event";
-        foreach ($this->getEventObservers($event) as $observer) {
-            $observer->update($this, $event, $data);
-        }
+        // Remove all occurrences of the delimited content
+        return \preg_replace($pattern, '', $text);
     }
 }

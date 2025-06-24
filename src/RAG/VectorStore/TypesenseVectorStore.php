@@ -1,163 +1,155 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\RAG\VectorStore;
 
+use Http\Client\Exception;
 use NeuronAI\RAG\Document;
 use Typesense\Client;
 use Typesense\Exceptions\ObjectNotFound;
+use Typesense\Exceptions\TypesenseClientError;
 
 class TypesenseVectorStore implements VectorStoreInterface
 {
-    /**
-     * @throws \Exception
-     */
     public function __construct(
         protected Client $client,
         protected string $collection,
-        protected int $vectorDimension
+        protected int $vectorDimension,
+        protected string $topK = '4',
     ) {
+    }
+
+    /**
+     * @throws Exception
+     * @throws TypesenseClientError
+     */
+    public function checkIndexStatus(Document $document): void
+    {
         try {
-
-            $this->client->collections[$collection]->retrieve();
-            $this->checkVectorDimension($this->vectorDimension);
+            $this->client->collections[$this->collection]->retrieve();
+            $this->checkVectorDimension(count($document->getEmbedding()));
             return;
+        } catch (ObjectNotFound) {
+            $fields = [
+                [
+                    'name' => 'content',
+                    'type' => 'string',
+                ],
+                [
+                    'name' => 'sourceType',
+                    'type' => 'string',
+                    'facet' => true,
+                ],
+                [
+                    'name' => 'sourceName',
+                    'type' => 'string',
+                    'facet' => true,
+                ],
+                [
+                    'name' => 'embedding',
+                    'type' => 'float[]',
+                    'num_dim' => $this->vectorDimension,
+                ],
+            ];
 
-        } catch (ObjectNotFound $e) {
+            // Map custom fields
+            foreach ($document->metadata as $name => $value) {
+                $fields[] = [
+                    'name' => $name,
+                    'type' => \gettype($value),
+                    'facet' => true,
+                ];
+            }
+
             $this->client->collections->create([
-                'name' => $collection,
-                'fields' => [
-                    [
-                        'name' => 'content',
-                        'type' => 'string',
-                    ],
-                    [
-                        'name' => 'sourceType',
-                        'type' => 'string',
-                        'facet' => true,
-                    ],
-                    [
-                        'name' => 'sourceName',
-                        'type' => 'string',
-                        'facet' => true,
-                    ],
-                    [
-                        'name' => 'hash',
-                        'type' => 'string',
-                        'facet' => true,
-                    ],
-                    [
-                        'name' => 'chunkNumber',
-                        'type' => 'int32',
-                    ],
-                    [
-                        'name' => 'embedding',
-                        'type' => 'float[]',
-                        'num_dim' => $this->vectorDimension,
-                    ]
-                ]
+                'name' => $this->collection,
+                'fields' => $fields,
             ]);
         }
     }
 
-    /**
-     * @throws \Exception
-     */
     public function addDocument(Document $document): void
     {
-        if ($document->embedding === null) {
+        if (empty($document->getEmbedding())) {
             throw new \Exception('document embedding must be set before adding a document');
         }
 
-        $this->checkVectorDimension(count((array) $document->embedding));
+        $this->checkIndexStatus($document);
 
         $this->client->collections[$this->collection]->documents->create([
-            'id' => $document->hash, // Unique ID is required
-            'embedding' => $document->embedding,
-            'content' => $document->content,
-            'sourceType' => $document->sourceType,
-            'sourceName' => $document->sourceName,
-            'hash' => $document->hash,
-            'chunkNumber' => $document->chunkNumber,
+            'id' => $document->getId(), // Unique ID is required
+            'content' => $document->getContent(),
+            'embedding' => $document->getEmbedding(),
+            'sourceType' => $document->getSourceType(),
+            'sourceName' => $document->getSourceName(),
+            ...$document->metadata,
         ]);
     }
 
     /**
-     * @param  Document[]  $documents
-     *
-     * @throws \Exception
+     * @param Document[] $documents
+     * @throws Exception
+     * @throws \JsonException
+     * @throws TypesenseClientError
      */
-    public function addDocuments(array $documents, int $numberOfDocumentsPerRequest = 0): void
+    public function addDocuments(array $documents): void
     {
         if ($documents === []) {
             return;
         }
 
-        if ($documents[0]->embedding === null) {
+        if (empty($documents[0]->getEmbedding())) {
             throw new \Exception('document embedding must be set before adding a document');
         }
 
-        $this->checkVectorDimension(count((array) $documents[0]->embedding));
+        $this->checkIndexStatus($documents[0]);
 
         $lines = [];
         foreach ($documents as $document) {
             $lines[] = json_encode([
-                'id' => $document->hash, // Unique ID is required
-                'embedding' => $document->embedding,
-                'content' => $document->content,
-                'sourceType' => $document->sourceType,
-                'sourceName' => $document->sourceName,
-                'hash' => $document->hash,
-                'chunkNumber' => $document->chunkNumber,
+                'id' => $document->getId(), // Unique ID is required
+                'embedding' => $document->getEmbedding(),
+                'content' => $document->getContent(),
+                'sourceType' => $document->getSourceType(),
+                'sourceName' => $document->getSourceName(),
+                ...$document->metadata,
             ]);
         }
 
         $ndjson = implode("\n", $lines);
 
-        if ($numberOfDocumentsPerRequest > 0) {
-            $chunks = array_chunk($lines, $numberOfDocumentsPerRequest);
-            foreach ($chunks as $chunk) {
-                $chunkNdjson = implode("\n", $chunk);
-                $this->client->collections[$this->collection]->documents->import($chunkNdjson);
-            }
-        } else {
-            $this->client->collections[$this->collection]->documents->import($ndjson);
-        }
+        $this->client->collections[$this->collection]->documents->import($ndjson);
     }
 
-    public function similaritySearch(array $embedding, int $k = 4, array $additionalArguments = []): array
+    public function similaritySearch(array $embedding): array
     {
-        $numCandidates = \max(50, $k * 4);
-        if (\array_key_exists('num_candidates', $additionalArguments)) {
-            $numCandidates = $additionalArguments['num_candidates'];
-        }
-
         $params = [
             'collection' => $this->collection,
             'q' => '*',
             'vector_query' => 'embedding:(' . json_encode($embedding) . ')',
             'exclude_fields' => 'embedding',
-            'per_page' => $k,
-            'num_candidates' => $numCandidates,
+            'per_page' => $this->topK,
+            'num_candidates' => \max(50, intval($this->topK) * 4),
         ];
-
-        if (isset($additionalArguments['filter'])) {
-            $params['filter_by'] = $additionalArguments['filter'];
-        }
 
         $searchRequests = ['searches' => [$params]];
 
-        // Search parameters that are common to all searches go here
-        $commonSearchParams =  [];
-
-        $response = $this->client->multiSearch->perform($searchRequests, $commonSearchParams);
+        $response = $this->client->multiSearch->perform($searchRequests);
         return \array_map(function (array $hit) {
-            $docData = $hit['document'];
-            $document = new Document($docData['content']);
-            // $document->embedding = $docData['embedding']; // avoid large transfers
-            $document->sourceType = $docData['sourceType'];
-            $document->sourceName = $docData['sourceName'];
-            $document->hash = $docData['hash'];
-            $document->chunkNumber = $docData['chunkNumber'];
+            $item = $hit['document'];
+            $document = new Document($item['content']);
+            //$document->embedding = $item['embedding']; // avoid carrying large data
+            $document->sourceType = $item['sourceType'];
+            $document->sourceName = $item['sourceName'];
+            $document->score = 1 - $hit['vector_distance'];
+
+            foreach ($item as $name => $value) {
+                if (!\in_array($name, ['content', 'sourceType', 'sourceName', 'score', 'embedding', 'id', 'vector_distance'])) {
+                    $document->addMetadata($name, $value);
+                }
+            }
+
             return $document;
         }, $response['results'][0]['hits']);
     }
@@ -184,7 +176,7 @@ class TypesenseVectorStore implements VectorStoreInterface
 
         throw new \Exception(
             "Vector embeddings dimension {$dimension} must be the same as the initial setup {$this->vectorDimension} - ".
-            json_encode($embeddingField)
+            \json_encode($embeddingField)
         );
     }
 }

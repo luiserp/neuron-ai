@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\Chat\Messages;
 
-use NeuronAI\Tools\Tool;
+use NeuronAI\Tools\ToolInterface;
 
 class ToolCallMessage extends AssistantMessage
 {
     /**
-     * @param array<Tool> $tools
+     * @param array<ToolInterface> $tools
      */
     public function __construct(
         protected array|string|int|float|null $content,
@@ -17,10 +19,21 @@ class ToolCallMessage extends AssistantMessage
     }
 
     /**
-     * @return array<Tool>
+     * @return array<ToolInterface>
      */
     public function getTools(): array
     {
         return $this->tools;
+    }
+
+    public function jsonSerialize(): array
+    {
+        return \array_merge(
+            parent::jsonSerialize(),
+            [
+                'type' => 'tool_call',
+                'tools' => \array_map(fn ($tool) => $tool->jsonSerialize(), $this->tools)
+            ]
+        );
     }
 }

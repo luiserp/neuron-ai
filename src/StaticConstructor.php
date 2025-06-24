@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI;
 
 trait StaticConstructor
@@ -7,11 +9,12 @@ trait StaticConstructor
     /**
      * Static constructor.
      *
-     * @param ...$args
+     * @param ...$arguments
      * @return static
      */
-    public static function make(...$args): static
+    public static function make(...$arguments): static
     {
-        return new static(...$args);
+        /** @phpstan-ignore new.static */
+        return new static(...$arguments);
     }
 }

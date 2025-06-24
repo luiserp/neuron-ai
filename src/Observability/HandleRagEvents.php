@@ -1,15 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NeuronAI\Observability;
 
-use NeuronAI\Observability\Events\InstructionsChanged;
-use NeuronAI\Observability\Events\InstructionsChanging;
+use NeuronAI\AgentInterface;
+use NeuronAI\Observability\Events\PostProcessed;
+use NeuronAI\Observability\Events\PostProcessing;
+use NeuronAI\Observability\Events\PreProcessed;
+use NeuronAI\Observability\Events\PreProcessing;
 use NeuronAI\Observability\Events\VectorStoreResult;
 use NeuronAI\Observability\Events\VectorStoreSearching;
 
 trait HandleRagEvents
 {
-    public function vectorStoreSearching(\NeuronAI\AgentInterface $agent, string $event, VectorStoreSearching $data)
+    public function vectorStoreSearching(AgentInterface $agent, string $event, VectorStoreSearching $data): void
     {
         if (!$this->inspector->canAddSegments()) {
             return;
@@ -22,44 +27,66 @@ trait HandleRagEvents
             ->setColor(self::SEGMENT_COLOR);
     }
 
-    public function vectorStoreResult(\NeuronAI\AgentInterface $agent, string $event, VectorStoreResult $data)
+    public function vectorStoreResult(AgentInterface $agent, string $event, VectorStoreResult $data): void
     {
         $id = \md5($data->question->getContent());
 
         if (\array_key_exists($id, $this->segments)) {
-            $this->segments[$id]
-                ->addContext('Data', [
+            $segment = $this->segments[$id];
+            $segment->addContext('Data', [
                     'question' => $data->question->getContent(),
                     'documents' => \count($data->documents)
-                ])
-                ->end();
+                ]);
+            $segment->end();
         }
     }
 
-    public function instructionsChanging(\NeuronAI\AgentInterface $agent, string $event, InstructionsChanging $data)
+    public function preProcessing(AgentInterface $agent, string $event, PreProcessing $data): void
     {
         if (!$this->inspector->canAddSegments()) {
             return;
         }
 
-        $id = \md5($data->instructions);
-
-        $this->segments['instructions-'.$id] = $this->inspector
-            ->startSegment(self::SEGMENT_TYPE.'-instructions')
+        $segment = $this->inspector
+            ->startSegment(self::SEGMENT_TYPE.'-preprocessing', $data->processor)
             ->setColor(self::SEGMENT_COLOR);
+
+        $segment->addContext('Original', $data->original->jsonSerialize());
+
+        $this->segments[$data->processor] = $segment;
     }
 
-    public function instructionsChanged(\NeuronAI\AgentInterface $agent, string $event, InstructionsChanged $data)
+    public function preProcessed(AgentInterface $agent, string $event, PreProcessed $data): void
     {
-        $id = 'instructions-'.\md5($data->previous);
+        if (\array_key_exists($data->processor, $this->segments)) {
+            $this->segments[$data->processor]
+                ->end()
+                ->addContext('Processed', $data->processed->jsonSerialize());
+        }
+    }
 
-        if (\array_key_exists($id, $this->segments)) {
-            $this->segments[$id]
-                ->addContext('Instructions', [
-                    'previous' => $data->previous,
-                    'current' => $data->current
-                ])
-                ->end();
+    public function postProcessing(AgentInterface $agent, string $event, PostProcessing $data): void
+    {
+        if (!$this->inspector->canAddSegments()) {
+            return;
+        }
+
+        $segment = $this->inspector
+            ->startSegment(self::SEGMENT_TYPE.'-postprocessing', $data->processor)
+            ->setColor(self::SEGMENT_COLOR);
+
+        $segment->addContext('Question', $data->question->jsonSerialize())
+            ->addContext('Documents', $data->documents);
+
+        $this->segments[$data->processor] = $segment;
+    }
+
+    public function postProcessed(AgentInterface $agent, string $event, PostProcessed $data): void
+    {
+        if (\array_key_exists($data->processor, $this->segments)) {
+            $this->segments[$data->processor]
+                ->end()
+                ->addContext('PostProcess', $data->documents);
         }
     }
 }

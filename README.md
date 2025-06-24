@@ -1,9 +1,15 @@
+# Create Full-Featured AI Agents As Standalone Components In Any PHP Application
+
 [![Latest Stable Version](https://poser.pugx.org/inspector-apm/neuron-ai/v/stable)](https://packagist.org/packages/inspector-apm/neuron-ai)
-[![License](https://poser.pugx.org/inspector-apm/neuron-ai/license)](//packagist.org/packages/inspector-apm/neuron-ai)
+[![Total Downloads](http://poser.pugx.org/inspector-apm/neuron-ai/downloads)](https://packagist.org/packages/inspector-apm/neuron-ai)
 
 > Before moving on, support the community giving a GitHub star ⭐️. Thank you!
 
-![](./docs/img/neuron-ai-php-framework.png)
+[**Video Tutorial**](https://www.youtube.com/watch?v=fJSX8wWIDO8)
+
+[![Neuron & Inspector](./docs/images/youtube.png)](https://www.youtube.com/watch?v=fJSX8wWIDO8)
+
+---
 
 ## Requirements
 
@@ -13,11 +19,17 @@
 
 **[Go to the official documentation](https://neuron.inspector.dev/)**
 
-## Examples
+## Guides & Tutorials
+
+Check out the technical guides and tutorials archive to learn how to start creating your AI Agents with Neuron
+https://docs.neuron-ai.dev/resources/guides-and-tutorials.
+
+## Neuron AI Examples
 
 - [Install](#install)
 - [Create an Agent](#create)
 - [Talk to the Agent](#talk)
+- [Monitoring](#monitoring)
 - [Supported LLM Providers](#providers)
 - [Tools & Function Calls](#tools)
 - [MCP server connector](#mcp)
@@ -39,18 +51,22 @@ composer require inspector-apm/neuron-ai
 
 ## Create an Agent
 
-Neuron provides you with the Agent class you can extend to inherit the main features of the framework,
-and create fully functional agents. This class automatically manages some advanced mechanisms for you such as memory,
+Neuron provides you with the Agent class you can extend to inherit the main features of the framework
+and create fully functional agents. This class automatically manages some advanced mechanisms for you, such as memory,
 tools and function calls, up to the RAG systems. You can go deeper into these aspects in the [documentation](https://docs.neuron-ai.dev).
 In the meantime, let's create the first agent, extending the `NeuronAI\Agent` class:
 
 ```php
+<?php
+
+namespace App\Neuron;
+
 use NeuronAI\Agent;
 use NeuronAI\SystemPrompt;
 use NeuronAI\Providers\AIProviderInterface;
 use NeuronAI\Providers\Anthropic\Anthropic;
 
-class YouTubeAgent extends Agent
+class DataAnalystAgent extends Agent
 {
     public function provider(): AIProviderInterface
     {
@@ -63,15 +79,8 @@ class YouTubeAgent extends Agent
     public function instructions(): string
     {
         return new SystemPrompt(
-            background: ["You are an AI Agent specialized in writing YouTube video summaries."],
-            steps: [
-                "Get the url of a YouTube video, or ask the user to provide one.",
-                "Use the tools you have available to retrieve the transcription of the video.",
-                "Write the summary.",
-            ],
-            output: [
-                "Write a summary in a paragraph without using lists. Use just fluent text.",
-                "After the summary add a list of three sentences as the three most important take away from the video.",
+            background: [
+                "You are a data analyst expert in creating reports from SQL databases."
             ]
         );
     }
@@ -88,14 +97,18 @@ reducing the effort for prompt engineering.
 Send a prompt to the agent to get a response from the underlying LLM:
 
 ```php
-$agent = YouTubeAgent::make();
 
-$response = $agent->run(new UserMessage("Hi, I'm Valerio. Who are you?"));
+$agent = DataAnalystAgent::make();
+
+
+$response = $agent->chat(
+    new UserMessage("Hi, I'm Valerio. Who are you?")
+);
 echo $response->getContent();
-// I'm a friendly YouTube assistant to help you summarize videos.
+// I'm a data analyst. How can I help you today?
 
 
-$response = $agent->run(
+$response = $agent->chat(
     new UserMessage("Do you know my name?")
 );
 echo $response->getContent();
@@ -104,34 +117,69 @@ echo $response->getContent();
 
 As you can see in the example above, the Agent automatically has memory of the ongoing conversation. Learn more about memory in the [documentation](https://docs.neuron-ai.dev/chat-history-and-memory).
 
+<a name="monitoring">
+
+## Monitoring
+
+Integrating AI Agents into your application you’re not working only with functions and deterministic code,
+you program your agent also influencing probability distributions. Same input ≠ output.
+That means reproducibility, versioning, and debugging become real problems.
+
+Many of the Agents you build with NeuronAI will contain multiple steps with multiple invocations of LLM calls,
+tool usage, access to external memories, etc. As these applications get more and more complex, it becomes crucial
+to be able to inspect what exactly your agent is doing and why.
+
+Why is the model taking certain decisions? What data is the model reacting to? Prompting is not programming
+in the common sense. No static types, small changes break output, long prompts cost latency,
+and no two models behave exactly the same with the same prompt.
+
+The best way to do this is with [Inspector](https://inspector.dev). After you sign up,
+make sure to set the `INSPECTOR_INGESTION_KEY` variable in the application environment file to start monitoring:
+
+```dotenv
+INSPECTOR_INGESTION_KEY=fwe45gtxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+After configuring the environment variable, you will see the agent execution timeline in your Inspector dashboard.
+
+![](./docs/images/neuron-observability.avif)
+
+Learn more about Monitoring in the [documentation](https://docs.neuron-ai.dev/advanced/observability).
+
 <a name="providers">
 
 ## Supported LLM Providers
 
-With Neuron you can switch between LLM providers with just one line of code, without any impact on your agent implementation.
+With NeuronAI, you can switch between LLM providers with just one line of code, without any impact on your agent implementation.
 Supported providers:
 
 - Anthropic
 - Ollama (also available as an [embeddings provider](https://docs.neuron-ai.dev/components/embeddings-provider#ollama))
-- OpenAI
-- Mistral
-- Deepseek
+- OpenAI (also available as an [embeddings provider](https://docs.neuron-ai.dev/components/embeddings-provider#openai))
+- OpenAI on Azure
+- Gemini
+- HuggingFace
 
 <a name="tools">
 
-## Tools & Function Calls
+## Tools & Toolkits
 
-You can add the ability to perform concrete tasks to your Agent with an array of `Tool`:
+You can add abilities to your agent to perform concrete tasks:
 
 ```php
+<?php
+
+namespace App\Neuron;
+
 use NeuronAI\Agent;
-use NeuronAI\SystemPrompt;
 use NeuronAI\Providers\AIProviderInterface;
 use NeuronAI\Providers\Anthropic\Anthropic;
-use NeuronAI\Tools\Tool;
+use NeuronAI\SystemPrompt;
 use NeuronAI\Tools\ToolProperty;
+use NeuronAI\Tools\Tool;
+use NeuronAI\Tools\Toolkits\MySQL\MySQLToolkit;
 
-class YouTubeAgent extends Agent
+class DataAnalystAgent extends Agent
 {
     public function provider(): AIProviderInterface
     {
@@ -144,15 +192,8 @@ class YouTubeAgent extends Agent
     public function instructions(): string
     {
         return new SystemPrompt(
-            background: ["You are an AI Agent specialized in writing YouTube video summaries."],
-            steps: [
-                "Get the url of a YouTube video, or ask the user to provide one.",
-                "Use the tools you have available to retrieve the transcription of the video.",
-                "Write the summary.",
-            ],
-            output: [
-                "Write a summary in a paragraph without using lists. Use just fluent text.",
-                "After the summary add a list of three sentences as the three most important take away from the video.",
+            background: [
+                "You are a data analyst expert in creating reports from SQL databases."
             ]
         );
     }
@@ -160,25 +201,15 @@ class YouTubeAgent extends Agent
     public function tools(): array
     {
         return [
-            Tool::make(
-                'get_transcription',
-                'Retrieve the transcription of a youtube video.',
-            )->addProperty(
-                new ToolProperty(
-                    name: 'video_url',
-                    type: 'string',
-                    description: 'The URL of the YouTube video.',
-                    required: true
-                )
-            )->setCallable(function (string $video_url) {
-                // ... retrieve the video transcription
-            })
+            MySQLToolkit:make(
+                \DB::connection()->getPdo()
+            ),
         ];
     }
 }
 ```
 
-Learn more about Tools on the [documentation](https://docs.neuron-ai.dev/tools-and-function-calls).
+Learn more about Tools in the [documentation](https://docs.neuron-ai.dev/tools-and-function-calls).
 
 <a name="mcp">
 
@@ -187,64 +218,43 @@ Learn more about Tools on the [documentation](https://docs.neuron-ai.dev/tools-a
 Instead of implementing tools manually, you can connect tools exposed by an MCP server with the `McpConnector` component:
 
 ```php
+<?php
+
+namespace App\Neuron;
+
 use NeuronAI\Agent;
 use NeuronAI\MCP\McpConnector;
 use NeuronAI\Providers\AIProviderInterface;
 use NeuronAI\Providers\Anthropic\Anthropic;
-use NeuronAI\Tools\Tool;
 use NeuronAI\Tools\ToolProperty;
+use NeuronAI\Tools\Tool;
 
-class SEOAgent extends Agent
+class DataAnalystAgent extends Agent
 {
     public function provider(): AIProviderInterface
     {
-        return new Anthropic(
-            key: 'ANTHROPIC_API_KEY',
-            model: 'ANTHROPIC_MODEL',
-        );
+        ...
     }
 
     public function instructions(): string
     {
-        return new SystemPrompt(
-            background: ["Act as an expert of SEO (Search Engine Optimization)."]
-            steps: [
-                "Analyze a text of an article.",
-                "Provide suggestions on how the content can be improved to get a better rank on Google search."
-            ],
-            output: ["Structure your analysis in sections. One for each suggestion."]
-        );
+        ...
     }
 
     public function tools(): array
     {
         return [
-            // Connect an MCP server
+            // Connect to an MCP server
             ...McpConnector::make([
                 'command' => 'npx',
                 'args' => ['-y', '@modelcontextprotocol/server-everything'],
             ])->tools(),
-
-            // Implement your custom tools
-            Tool::make(
-                'get_transcription',
-                'Retrieve the transcription of a youtube video.',
-            )->addProperty(
-                new ToolProperty(
-                    name: 'video_url',
-                    type: 'string',
-                    description: 'The URL of the YouTube video.',
-                    required: true
-                )
-            )->setCallable(function (string $video_url) {
-                // ... retrieve the video transcription
-            })
         ];
     }
 }
 ```
 
-Learn more about MCP connector on the [documentation](https://docs.neuron-ai.dev/advanced/mcp-servers-connection).
+Learn more about MCP connector in the [documentation](https://docs.neuron-ai.dev/advanced/mcp-servers-connection).
 
 <a name="rag">
 
@@ -258,12 +268,16 @@ and an `embeddings provider`.
 Here is an example of a RAG implementation:
 
 ```php
+<?php
+
+namespace App\Neuron;
+
 use NeuronAI\Providers\AIProviderInterface;
 use NeuronAI\Providers\Anthropic\Anthropic;
 use NeuronAI\RAG\Embeddings\EmbeddingsProviderInterface;
 use NeuronAI\RAG\Embeddings\VoyageEmbeddingProvider;
 use NeuronAI\RAG\RAG;
-use NeuronAI\RAG\VectorStore\PineconeVectoreStore;
+use NeuronAI\RAG\VectorStore\PineconeVectorStore;
 use NeuronAI\RAG\VectorStore\VectorStoreInterface;
 
 class MyChatBot extends RAG
@@ -286,7 +300,7 @@ class MyChatBot extends RAG
 
     public function vectorStore(): VectorStoreInterface
     {
-        return new PineconeVectoreStore(
+        return new PineconeVectorStore(
             key: 'PINECONE_API_KEY',
             indexUrl: 'PINECONE_INDEX_URL'
         );
@@ -294,7 +308,7 @@ class MyChatBot extends RAG
 }
 ```
 
-Learn more about RAG on the [documentation](https://docs.neuron-ai.dev/rag).
+Learn more about RAG in the [documentation](https://docs.neuron-ai.dev/rag).
 
 <a name="structured">
 
@@ -306,9 +320,13 @@ One common use-case is extracting data from text to insert into a database or us
 This guide covers a few strategies for getting structured outputs from the agent.
 
 ```php
+use App\Neuron\MyAgent;
+use NeuronAI\Chat\Messages\UserMessage;
 use NeuronAI\StructuredOutput\SchemaProperty;
 
-// Define the output structure with a PHP class, including validation constraints.
+/*
+ * Define the output structure as a PHP class.
+ */
 class Person
 {
     #[SchemaProperty(description: 'The user name')]
@@ -317,7 +335,6 @@ class Person
     #[SchemaProperty(description: 'What the user love to eat')]
     public string $preference;
 }
-
 
 // Talk to the agent requiring the structured output
 $person = MyAgent::make()->structured(
@@ -337,11 +354,4 @@ Learn more about Structured Output on the [documentation](https://docs.neuron-ai
 
 **[Go to the official documentation](https://neuron.inspector.dev/)**
 
-## Contributing
 
-We encourage you to contribute to the development of Neuron AI Framework!
-Please check out the [Contribution Guidelines](CONTRIBUTING.md) about how to proceed. Join us!
-
-## LICENSE
-
-This bundle is licensed under the [MIT](LICENSE) license.
